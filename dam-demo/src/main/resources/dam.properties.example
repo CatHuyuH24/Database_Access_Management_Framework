@@ -1,0 +1,13 @@
+# DAM Demo Application Configuration
+
+# Database Connection
+dam.connection.url=jdbc:mysql://localhost:3306/dam_demo
+dam.connection.username=root
+dam.connection.password=your_password
+dam.connection.driver=com.mysql.cj.jdbc.Driver
+
+# Database Dialect
+dam.dialect=mysql
+
+# Show SQL statements
+dam.showSql=true

@@ -1,0 +1,19 @@
+# DAM Framework Configuration
+# Copy this file to dam.properties and modify as needed
+
+# Database Connection
+dam.connection.url=jdbc:mysql://localhost:3306/dam_db
+dam.connection.username=root
+dam.connection.password=your_password
+dam.connection.driver=com.mysql.cj.jdbc.Driver
+
+# Database Dialect (mysql, postgresql, sqlserver, sqlite)
+dam.dialect=mysql
+
+# Connection Pool Settings
+dam.pool.minSize=5
+dam.pool.maxSize=20
+dam.pool.timeout=30000
+
+# Logging
+dam.showSql=true
