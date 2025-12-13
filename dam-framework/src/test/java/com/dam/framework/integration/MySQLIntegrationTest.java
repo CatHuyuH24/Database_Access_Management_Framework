@@ -61,8 +61,6 @@ class MySQLIntegrationTest {
   // H2 database in MySQL mode for testing
   private static final String TEST_URL = "jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1";
   private static final String TEST_DRIVER = "org.h2.Driver";
-  private static final String TEST_USER = "sa";
-  private static final String TEST_PASSWORD = "";
 
   private ConnectionManager connectionManager;
   private MySQLDialect dialect;
@@ -78,8 +76,6 @@ class MySQLIntegrationTest {
     // Initialize connection manager
     connectionManager = new BasicConnectionManager.Builder()
         .url(TEST_URL)
-        .username(TEST_USER)
-        .password(TEST_PASSWORD)
         .driverClass(TEST_DRIVER)
         .minSize(2)
         .maxSize(5)
