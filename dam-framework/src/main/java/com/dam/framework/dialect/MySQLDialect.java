@@ -1,6 +1,10 @@
 package com.dam.framework.dialect;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Types;
+
+import com.dam.framework.util.TypeMapper;
 
 /**
  * MySQL-specific SQL dialect implementation.
@@ -350,6 +354,106 @@ public class MySQLDialect implements Dialect {
       default:
         return false;
     }
+  }
+
+  /**
+   * Get the JDBC type code for a Java class using TypeMapper.
+   * <p>
+   * This method delegates to TypeMapper for consistent type mapping
+   * across the framework.
+   * 
+   * @param javaType the Java class
+   * @return the JDBC type code
+   * 
+   * @see TypeMapper#getJdbcType(Class)
+   */
+  public int getJdbcTypeForJavaType(Class<?> javaType) {
+    return TypeMapper.getJdbcType(javaType);
+  }
+
+  /**
+   * Get the default Java class for a JDBC type code.
+   * <p>
+   * This method delegates to TypeMapper for consistent type mapping
+   * across the framework.
+   * 
+   * @param jdbcType the JDBC type code
+   * @return the corresponding Java class
+   * 
+   * @see TypeMapper#getJavaType(int)
+   */
+  public Class<?> getJavaTypeForJdbcType(int jdbcType) {
+    return TypeMapper.getJavaType(jdbcType);
+  }
+
+  /**
+   * Set a parameter value in PreparedStatement with proper type handling.
+   * <p>
+   * This is a convenience method that handles null values and type-specific
+   * parameter setting for MySQL.
+   * 
+   * @param stmt           the PreparedStatement
+   * @param parameterIndex the parameter index (1-based)
+   * @param value          the parameter value (can be null)
+   * @param javaType       the Java type of the value
+   * @throws SQLException if parameter setting fails
+   * 
+   * @example
+   * 
+   *          <pre>
+   *          MySQLDialect dialect = new MySQLDialect();
+   *          dialect.setParameter(stmt, 1, "John", String.class);
+   *          dialect.setParameter(stmt, 2, 25, Integer.class);
+   *          dialect.setParameter(stmt, 3, null, String.class);
+   *          </pre>
+   */
+  public void setParameter(PreparedStatement stmt, int parameterIndex, Object value, Class<?> javaType)
+      throws SQLException {
+    if (value == null) {
+      int jdbcType = TypeMapper.getJdbcType(javaType);
+      stmt.setNull(parameterIndex, jdbcType);
+      return;
+    }
+
+    // Handle specific MySQL type conversions
+    if (value instanceof Boolean) {
+      // MySQL uses TINYINT(1) for booleans
+      stmt.setInt(parameterIndex, ((Boolean) value) ? 1 : 0);
+    } else if (value instanceof java.time.LocalDate) {
+      stmt.setDate(parameterIndex, java.sql.Date.valueOf((java.time.LocalDate) value));
+    } else if (value instanceof java.time.LocalTime) {
+      stmt.setTime(parameterIndex, java.sql.Time.valueOf((java.time.LocalTime) value));
+    } else if (value instanceof java.time.LocalDateTime) {
+      stmt.setTimestamp(parameterIndex, java.sql.Timestamp.valueOf((java.time.LocalDateTime) value));
+    } else if (value instanceof Enum) {
+      // Store enums as strings
+      stmt.setString(parameterIndex, ((Enum<?>) value).name());
+    } else {
+      // Use default setObject for other types
+      stmt.setObject(parameterIndex, value);
+    }
+  }
+
+  /**
+   * Get the MySQL-specific type name for a Java class.
+   * <p>
+   * Combines TypeMapper and getTypeName for convenient Java-to-MySQL type
+   * mapping.
+   * 
+   * @param javaType the Java class
+   * @param length   the column length (for string types)
+   * @return MySQL type name
+   * 
+   * @example
+   * 
+   *          <pre>
+   *          String mysqlType = dialect.getMySQLTypeForJavaType(String.class, 100);
+   *          // Returns "VARCHAR(100)"
+   *          </pre>
+   */
+  public String getMySQLTypeForJavaType(Class<?> javaType, int length) {
+    int jdbcType = TypeMapper.getJdbcType(javaType);
+    return getTypeName(jdbcType, length);
   }
 
   @Override
