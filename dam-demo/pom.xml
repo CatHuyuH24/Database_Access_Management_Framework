@@ -26,6 +26,13 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- H2 Database for demo -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.1.214</version>
+        </dependency>
+
         <!-- MySQL Driver for demo -->
         <dependency>
             <groupId>mysql</groupId>
