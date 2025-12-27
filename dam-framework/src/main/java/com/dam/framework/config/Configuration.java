@@ -1,22 +1,30 @@
 package com.dam.framework.config;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import com.dam.framework.connection.BasicConnectionManager;
+import com.dam.framework.exception.DAMException;
 import com.dam.framework.session.SessionFactory;
+import com.dam.framework.util.ClasspathResources;
 
 /**
  * Configuration class for the DAM Framework.
  * <p>
- * Provides fluent API for configuring database connection and framework settings.
+ * Provides fluent API for configuring database connection and framework
+ * settings.
  * 
  * <pre>
  * {@code
  * Configuration config = new Configuration()
- *     .setUrl("jdbc:mysql://localhost:3306/mydb")
- *     .setUsername("root")
- *     .setPassword("secret")
- *     .setDriver("com.mysql.cj.jdbc.Driver")
- *     .setDialect(DialectType.MYSQL)
- *     .addAnnotatedClass(User.class)
- *     .addAnnotatedClass(Order.class);
+ *         .setUrl("jdbc:mysql://localhost:3306/mydb")
+ *         .setUsername("root")
+ *         .setPassword("secret")
+ *         .setDriver("com.mysql.cj.jdbc.Driver")
+ *         .setDialect(DialectType.MYSQL)
+ *         .addAnnotatedClass(User.class)
+ *         .addAnnotatedClass(Order.class);
  * 
  * SessionFactory factory = config.buildSessionFactory();
  * }
@@ -25,27 +33,38 @@ import com.dam.framework.session.SessionFactory;
  * @see SessionFactory
  */
 public class Configuration {
-    
+
     // TODO: Implement configuration properties and methods
-    
+    private BasicConnectionManager.Builder _conBuilder;
+    Properties _properties = new Properties();
+
     /**
      * Creates a new Configuration instance.
      */
     public Configuration() {
         // Default constructor
     }
-    
+
     /**
      * Load configuration from a properties file.
      * 
      * @param resourcePath path to the properties file
      * @return this Configuration for method chaining
+     * @throws DAMException if the file is not found
      */
-    public Configuration configure(String resourcePath) {
+    public Configuration loadConfiguration(String resourcePath) throws IOException {
         // TODO: Implement properties file loading
-        return this;
+
+        try (InputStream is = ClasspathResources.getResourceAsStream(resourcePath)) {
+            if (null == is) {
+                throw new DAMException("Configuration file not found at: " + resourcePath);
+            }
+
+            _properties.load(is);
+            return this;
+        }
     }
-    
+
     /**
      * Set the JDBC connection URL.
      * 
@@ -53,10 +72,10 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setUrl(String url) {
-        // TODO: Implement
+        _conBuilder.url(url);
         return this;
     }
-    
+
     /**
      * Set the database username.
      * 
@@ -64,10 +83,10 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setUsername(String username) {
-        // TODO: Implement
+        _conBuilder.username(username);
         return this;
     }
-    
+
     /**
      * Set the database password.
      * 
@@ -76,9 +95,10 @@ public class Configuration {
      */
     public Configuration setPassword(String password) {
         // TODO: Implement
+        _conBuilder.password(password);
         return this;
     }
-    
+
     /**
      * Set the JDBC driver class name.
      * 
@@ -86,21 +106,21 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setDriver(String driverClass) {
-        // TODO: Implement
+        _conBuilder.driverClass(driverClass);
         return this;
     }
-    
-    /**
-     * Set the database dialect.
-     * 
-     * @param dialect the dialect type
-     * @return this Configuration for method chaining
-     */
-    public Configuration setDialect(DialectType dialect) {
-        // TODO: Implement
-        return this;
-    }
-    
+
+    // /**
+    // * Set the database dialect.
+    // *
+    // * @param dialect the dialect type
+    // * @return this Configuration for method chaining
+    // */
+    // public Configuration setDialect(DialectType dialect) {
+    // _conBuilder
+    // return this;
+    // }
+
     /**
      * Add an annotated entity class.
      * 
@@ -111,7 +131,7 @@ public class Configuration {
         // TODO: Implement
         return this;
     }
-    
+
     /**
      * Scan a package for entity classes.
      * 
@@ -122,7 +142,7 @@ public class Configuration {
         // TODO: Implement
         return this;
     }
-    
+
     /**
      * Enable or disable SQL logging.
      * 
@@ -133,7 +153,7 @@ public class Configuration {
         // TODO: Implement
         return this;
     }
-    
+
     /**
      * Build and return a SessionFactory based on this configuration.
      * 

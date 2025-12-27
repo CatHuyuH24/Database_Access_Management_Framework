@@ -1,5 +1,16 @@
 package com.dam.framework.mapping;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import com.dam.framework.annotations.Column;
+import com.dam.framework.annotations.Id;
+import com.dam.framework.annotations.Table;
+import com.dam.framework.exception.DAMException;
+import com.dam.framework.util.ReflectionUtils;
+
 /**
  * Holds metadata information about an entity class.
  * <p>
@@ -9,12 +20,73 @@ package com.dam.framework.mapping;
  * @see com.dam.framework.annotations.Entity
  */
 public class EntityMetadata {
-    
-    // TODO: Implement entity metadata storage
-    // - Entity class reference
-    // - Table name
-    // - Schema name
-    // - Primary key field metadata
-    // - List of column field metadata
+
+    private Class<?> entityClass;
+    private String tableName;
+    private String tableSchema;
+    private ColumnMetadata idColumn;
+    private List<ColumnMetadata> columns;
+
     // - Relationship metadata
+    // private Map<String, RelationshipMetadata> relationships;
+
+    public EntityMetadata(Class<?> entityClass) {
+        this.entityClass = entityClass;
+
+        // Reflection scanning to process table name and schema
+        if (entityClass.isAnnotationPresent(Table.class)) {
+            Table tableAnnotation = entityClass.getAnnotation(Table.class);
+            this.tableName = tableAnnotation.name().isBlank() ? entityClass.getSimpleName() : tableAnnotation.name();
+            this.tableSchema = tableAnnotation.schema().isBlank() ? "public" : tableAnnotation.schema();
+        } else {
+            this.tableName = entityClass.getSimpleName();
+            this.tableSchema = "public";
+        }
+
+        // Reflection scanning to process columns
+        List<Field> fields = ReflectionUtils.getFieldsWithAnotation(entityClass, Id.class);
+        if (fields.size() > 1) {
+            throw new DAMException(
+                    "More than one column is annotated with @Id in class " + entityClass.getSimpleName());
+        } else if (fields.size() < 1) {
+            throw new DAMException("No annotation @Id is set for class " + entityClass.getSimpleName());
+        }
+        Field idField = fields.getFirst();
+        this.idColumn = new ColumnMetadata(idField.getName(), idField.getType(), null, false, true);
+
+        this.columns = new ArrayList<>();
+        this.columns.add(idColumn);// also include id column
+        fields = ReflectionUtils.getFieldsWithAnotation(entityClass, Column.class);
+        for (Field field : fields) {
+            Column colAnnotation = field.getAnnotation(Column.class);
+            String colName = colAnnotation.name().isBlank() ? field.getName() : colAnnotation.name();
+            this.columns.add(
+                    new ColumnMetadata(
+                            colName, field.getType(),
+                            null, colAnnotation.nullable(),
+                            colAnnotation.unique()));
+        }
+
+    }
+
+    public Class<?> getEntityClass() {
+        return entityClass;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public ColumnMetadata getPrimaryKey() {
+        return idColumn;
+    }
+
+    public List<ColumnMetadata> getColumns() {
+        return Collections.unmodifiableList(columns);
+    }
+
+    public String getSchema() {
+        return tableSchema;
+    }
+
 }

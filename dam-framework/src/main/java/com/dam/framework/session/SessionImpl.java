@@ -6,12 +6,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.dam.framework.mapping.EntityKey;
+import com.dam.framework.mapping.EntityMetadata;
 import com.dam.framework.query.Query;
 import com.dam.framework.transaction.Transaction;
-import com.dam.framework.util.EntityKey;
 
 class SessionImpl implements Session {
-    private Map<EntityKey, Object> _attachedObjects = new HashMap<>();
+    private final SessionFactory _sessionFactory;
+    private final Map<EntityKey, EntityMetadata> _attachedEntities;
+
+    public SessionImpl(SessionFactory sessionFactory, Map<EntityKey, EntityMetadata> metadaMap) {
+        _sessionFactory = sessionFactory;
+        _attachedEntities = metadaMap;
+    }
 
     @Override
     public void close() throws Exception {
@@ -34,26 +41,23 @@ class SessionImpl implements Session {
 
     @Override
     public <T> T find(Class<T> entityClass, Object id) {
-        Set<EntityKey> keySet = _attachedObjects.keySet();
-        for (EntityKey k : keySet) {
-            if (k.entityClass() == entityClass && k.id() == id) {
-                return ((T) _attachedObjects.get(k));
-            }
-        }
-        return null;
+        Object entity = _attachedObjects.get(new EntityKey(entityClass, id));
+        return entityClass.cast(entity);
     }
 
     @Override
     public <T> T merge(T entity) {
-        Set<Map.Entry<EntityKey, Object>> entities = _attachedObjects.entrySet();
-        for (Map.Entry<EntityKey, Object> e : entities) {
-            if (e.getClass().equals(entity.getClass()) && e.equals(entity)) {
-                e.setValue(entity);
-                return ((T) e);
-            }
-        }
-        _attachedObjects.put(new EntityKey(entity.getClass(), UUID.randomUUID()), entity);
-        return entity;
+        return null;
+        // Set<Map.Entry<EntityKey, Object>> entities = _attachedObjects.entrySet();
+        // for (Map.Entry<EntityKey, Object> e : entities) {
+        // if (e.getClass().equals(entity.getClass()) && e.equals(entity)) {
+        // e.setValue(entity);
+        // return ((T) e);
+        // }
+        // }
+        // _attachedObjects.put(new EntityKey(entity.getClass(), UUID.randomUUID()),
+        // entity);
+        // return entity;
     }
 
     @Override

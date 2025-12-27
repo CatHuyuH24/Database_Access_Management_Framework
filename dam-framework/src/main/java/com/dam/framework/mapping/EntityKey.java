@@ -1,4 +1,4 @@
-package com.dam.framework.util;
+package com.dam.framework.mapping;
 
 public record EntityKey(Class<?> entityClass, Object id) {
     public EntityKey {
