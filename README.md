@@ -43,16 +43,17 @@ A lightweight Object-Relational Mapping (ORM) framework for Java, similar to Hib
 
 Before you begin, ensure you have the following installed:
 
-| Requirement | Version | Check Command |
-|------------|---------|---------------|
-| **Java JDK** | 11 or higher | `java -version` |
-| **Maven** | 3.8 or higher | `mvn -version` |
-| **Git** | Any recent version | `git --version` |
-| **Database** | MySQL 8.0+ / PostgreSQL 13+ / SQL Server 2019+ | - |
+| Requirement  | Version                                        | Check Command   |
+| ------------ | ---------------------------------------------- | --------------- |
+| **Java JDK** | 11 or higher                                   | `java -version` |
+| **Maven**    | 3.8 or higher                                  | `mvn -version`  |
+| **Git**      | Any recent version                             | `git --version` |
+| **Database** | MySQL 8.0+ / PostgreSQL 13+ / SQL Server 2019+ | -               |
 
 ### Installing Prerequisites
 
 **Java JDK 11+:**
+
 ```bash
 # Ubuntu/Debian
 sudo apt update && sudo apt install openjdk-11-jdk
@@ -64,6 +65,7 @@ brew install openjdk@11
 ```
 
 **Maven:**
+
 ```bash
 # Ubuntu/Debian
 sudo apt install maven
@@ -100,17 +102,17 @@ import com.dam.framework.annotations.*;
 @Entity
 @Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(name = "username", nullable = false)
     private String username;
-    
+
     @Column(name = "email")
     private String email;
-    
+
     // Getters and setters...
 }
 ```
@@ -140,17 +142,17 @@ try (Session session = factory.openSession()) {
     user.setUsername("john");
     user.setEmail("john@example.com");
     session.save(user);
-    
+
     // Read
     User found = session.find(User.class, 1L);
-    
+
     // Update
     found.setEmail("newemail@example.com");
     session.update(found);
-    
+
     // Delete
     session.delete(found);
-    
+
     // Query
     List<User> adults = session.createQuery(User.class)
         .where("age > ?", 18)
@@ -210,20 +212,20 @@ Database_Access_Management_Framework/
 
 ### Package Descriptions
 
-| Package | Description |
-|---------|-------------|
+| Package       | Description                                                      |
+| ------------- | ---------------------------------------------------------------- |
 | `annotations` | ORM annotations (@Entity, @Table, @Column, @Id, @GeneratedValue) |
-| `config` | Framework configuration and dialect type enumeration |
-| `connection` | Database connection management and pooling |
-| `dialect` | Database-specific SQL generation (MySQL, PostgreSQL, SQL Server) |
-| `engine` | Core ORM engine components |
-| `exception` | Custom exception classes (DAMException, etc.) |
-| `mapping` | Entity metadata parsing and storage |
-| `query` | Fluent query builder API |
-| `session` | Session and SessionFactory interfaces and implementations |
-| `sql` | SQL statement generation |
-| `transaction` | Transaction management |
-| `util` | Utility classes (reflection, etc.) |
+| `config`      | Framework configuration and dialect type enumeration             |
+| `connection`  | Database connection management and pooling                       |
+| `dialect`     | Database-specific SQL generation (MySQL, PostgreSQL, SQL Server) |
+| `engine`      | Core ORM engine components                                       |
+| `exception`   | Custom exception classes (DAMException, etc.)                    |
+| `mapping`     | Entity metadata parsing and storage                              |
+| `query`       | Fluent query builder API                                         |
+| `session`     | Session and SessionFactory interfaces and implementations        |
+| `sql`         | SQL statement generation                                         |
+| `transaction` | Transaction management                                           |
+| `util`        | Utility classes (reflection, etc.)                               |
 
 ---
 
@@ -334,23 +336,23 @@ SessionFactory factory = config.buildSessionFactory();
 @Entity
 @Table(name = "products")
 public class Product {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(name = "name", nullable = false, length = 100)
     private String name;
-    
+
     @Column(name = "price")
     private Double price;
-    
+
     @Column(name = "quantity")
     private Integer quantity;
-    
+
     // Default constructor required
     public Product() {}
-    
+
     // Getters and setters...
 }
 ```
@@ -359,22 +361,22 @@ public class Product {
 
 ```java
 try (Session session = factory.openSession()) {
-    
+
     // CREATE
     Product product = new Product();
     product.setName("Laptop");
     product.setPrice(999.99);
     product.setQuantity(10);
     session.save(product);
-    
+
     // READ
     Product found = session.find(Product.class, product.getId());
     List<Product> all = session.findAll(Product.class);
-    
+
     // UPDATE
     found.setPrice(899.99);
     session.update(found);
-    
+
     // DELETE
     session.delete(found);
 }
@@ -431,42 +433,52 @@ try {
 
 This framework implements the following Gang-of-Four (GoF) design patterns:
 
-| Pattern | Implementation | Purpose |
-|---------|---------------|---------|
-| **Factory** | `SessionFactory` | Creates Session instances |
-| **Singleton** | `Configuration` | Single configuration instance |
-| **Strategy** | `Dialect` interface | Database-specific SQL generation |
-| **Builder** | `Query` interface | Fluent query construction |
+| Pattern       | Implementation      | Purpose                          |
+| ------------- | ------------------- | -------------------------------- |
+| **Factory**   | `SessionFactory`    | Creates Session instances        |
+| **Singleton** | `Configuration`     | Single configuration instance    |
+| **Strategy**  | `Dialect` interface | Database-specific SQL generation |
+| **Builder**   | `Query` interface   | Fluent query construction        |
 
 ### Additional Patterns (Extended)
 
-| Pattern | Implementation | Purpose |
-|---------|---------------|---------|
-| **Proxy** | Lazy loading | Defer entity loading |
+| Pattern             | Implementation  | Purpose                   |
+| ------------------- | --------------- | ------------------------- |
+| **Proxy**           | Lazy loading    | Defer entity loading      |
 | **Template Method** | CRUD base class | Define operation skeleton |
 
 ---
 
 ## Supported Databases
 
-| Database | Dialect | Driver | Tested Version |
-|----------|---------|--------|----------------|
-| MySQL | `MYSQL` | mysql-connector-java | 8.0+ |
-| PostgreSQL | `POSTGRESQL` | postgresql | 13+ |
-| SQL Server | `SQLSERVER` | mssql-jdbc | 2019+ |
-| SQLite | `SQLITE` | sqlite-jdbc | 3.x |
+| Database   | Dialect      | Driver               | Tested Version |
+| ---------- | ------------ | -------------------- | -------------- |
+| MySQL      | `MYSQL`      | mysql-connector-java | 8.0+           |
+| PostgreSQL | `POSTGRESQL` | postgresql           | 13+            |
+| SQL Server | `SQLSERVER`  | mssql-jdbc           | 2019+          |
+| SQLite     | `SQLITE`     | sqlite-jdbc          | 3.x            |
 
 ---
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Project Breakdown](docs/project_breakdown.md) | Technical analysis, architecture, and patterns |
-| [User Stories](docs/user_stories.md) | User stories with acceptance criteria |
-| [Functional Requirements](docs/functional_requirements.md) | Detailed FRD document |
-| [Project Plan](docs/project_plan.md) | Timeline, milestones, and work breakdown |
-| [Core Requirements](docs/DP-Dac_ta_Do_an-Database_Access_Management_Framework-180420.md) | Original project requirements |
+### Project Documentation
+
+| Document                                                                                 | Description                                    |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [Project Breakdown](docs/project_breakdown.md)                                           | Technical analysis, architecture, and patterns |
+| [User Stories](docs/user_stories.md)                                                     | User stories with acceptance criteria          |
+| [Functional Requirements](docs/functional_requirements.md)                               | Detailed FRD document                          |
+| [Project Plan](docs/project_plan.md)                                                     | Timeline, milestones, and work breakdown       |
+| [Core Requirements](docs/DP-Dac_ta_Do_an-Database_Access_Management_Framework-180420.md) | Original project requirements                  |
+
+### Developer Implementation Guides
+
+| Guide                                                      | Description                      | Scope                                      |
+| ---------------------------------------------------------- | -------------------------------- | ------------------------------------------ |
+| [Dev A - MVP 1 Guide](docs/dev-guides/dev-a-mvp1-guide.md) | Core Engine & Session Management | Weeks 1-2: Foundation + CRUD               |
+| [Dev A - MVP 2 Guide](docs/dev-guides/dev-a-mvp2-guide.md) | Query API & Advanced Features    | Weeks 3-4: Query Builder + Aggregates      |
+| [Dev A - MVP 3 Guide](docs/dev-guides/dev-a-mvp3-guide.md) | Transaction Management & Polish  | Weeks 5-6: Transactions + Production Ready |
 
 ---
 
@@ -474,40 +486,40 @@ This framework implements the following Gang-of-Four (GoF) design patterns:
 
 ### Annotations
 
-| Annotation | Target | Description |
-|------------|--------|-------------|
-| `@Entity` | Class | Marks class as database entity |
-| `@Table(name="")` | Class | Specifies table name |
-| `@Id` | Field | Marks primary key field |
-| `@GeneratedValue` | Field | Auto-generate primary key |
-| `@Column(name="")` | Field | Specifies column mapping |
+| Annotation         | Target | Description                    |
+| ------------------ | ------ | ------------------------------ |
+| `@Entity`          | Class  | Marks class as database entity |
+| `@Table(name="")`  | Class  | Specifies table name           |
+| `@Id`              | Field  | Marks primary key field        |
+| `@GeneratedValue`  | Field  | Auto-generate primary key      |
+| `@Column(name="")` | Field  | Specifies column mapping       |
 
 ### Session Methods
 
-| Method | Description |
-|--------|-------------|
-| `find(Class, id)` | Find entity by primary key |
-| `findAll(Class)` | Find all entities of type |
-| `save(entity)` | Insert new entity |
-| `update(entity)` | Update existing entity |
-| `delete(entity)` | Delete entity |
-| `createQuery(Class)` | Create query builder |
-| `beginTransaction()` | Start transaction |
+| Method               | Description                |
+| -------------------- | -------------------------- |
+| `find(Class, id)`    | Find entity by primary key |
+| `findAll(Class)`     | Find all entities of type  |
+| `save(entity)`       | Insert new entity          |
+| `update(entity)`     | Update existing entity     |
+| `delete(entity)`     | Delete entity              |
+| `createQuery(Class)` | Create query builder       |
+| `beginTransaction()` | Start transaction          |
 
 ### Query Methods
 
-| Method | Description |
-|--------|-------------|
-| `where(condition, params)` | Add WHERE clause |
-| `and(condition, params)` | Add AND condition |
-| `or(condition, params)` | Add OR condition |
-| `groupBy(columns)` | Add GROUP BY |
-| `having(condition, params)` | Add HAVING clause |
-| `orderBy(column, order)` | Add ORDER BY |
-| `limit(n)` | Limit results |
-| `offset(n)` | Skip results |
-| `getResultList()` | Execute and get list |
-| `getSingleResult()` | Execute and get single |
+| Method                      | Description            |
+| --------------------------- | ---------------------- |
+| `where(condition, params)`  | Add WHERE clause       |
+| `and(condition, params)`    | Add AND condition      |
+| `or(condition, params)`     | Add OR condition       |
+| `groupBy(columns)`          | Add GROUP BY           |
+| `having(condition, params)` | Add HAVING clause      |
+| `orderBy(column, order)`    | Add ORDER BY           |
+| `limit(n)`                  | Limit results          |
+| `offset(n)`                 | Skip results           |
+| `getResultList()`           | Execute and get list   |
+| `getSingleResult()`         | Execute and get single |
 
 ---
 
@@ -535,4 +547,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-*Built with ❤️ for Database Access Management*
+_Built with ❤️ for Database Access Management_

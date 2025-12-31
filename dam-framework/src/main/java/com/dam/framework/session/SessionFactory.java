@@ -9,9 +9,9 @@ package com.dam.framework.session;
  * <pre>
  * {@code
  * Configuration config = new Configuration()
- *     .setUrl("jdbc:mysql://localhost:3306/mydb")
- *     .setUsername("root")
- *     .setPassword("password");
+ *         .setUrl("jdbc:mysql://localhost:3306/mydb")
+ *         .setUsername("root")
+ *         .setPassword("password");
  * 
  * SessionFactory factory = config.buildSessionFactory();
  * 
@@ -25,10 +25,10 @@ package com.dam.framework.session;
  * </pre>
  * 
  * @see Session
- * @see com.dam.framework.config.Configuration
+ * @see com.dam.framework.session.Configuration
  */
 public interface SessionFactory extends AutoCloseable {
-    
+
     /**
      * Open a new Session.
      * <p>
@@ -36,8 +36,8 @@ public interface SessionFactory extends AutoCloseable {
      * 
      * @return a new Session instance
      */
-    Session openSession();
-    
+    public Session openSession();
+
     /**
      * Get the current session bound to the context.
      * <p>
@@ -45,20 +45,23 @@ public interface SessionFactory extends AutoCloseable {
      * 
      * @return the current Session
      */
-    Session getCurrentSession();
-    
+    public Session getCurrentSession();
+
     /**
      * Check if the factory is still open.
      * 
      * @return true if open, false if closed
      */
-    boolean isOpen();
-    
+    public boolean isOpen();
+
     /**
      * Close the factory and release all resources.
      * <p>
      * This will close the connection pool and all active sessions.
      */
     @Override
-    void close();
+    public void close();
+
+    public int getOpenSessionCount();
+
 }

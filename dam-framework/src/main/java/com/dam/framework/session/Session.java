@@ -1,6 +1,8 @@
 package com.dam.framework.session;
 
-import java.util.List;
+import java.util.Map;
+
+import com.dam.framework.mapping.EntityMetadata;
 import com.dam.framework.query.Query;
 import com.dam.framework.transaction.Transaction;
 
@@ -20,86 +22,28 @@ import com.dam.framework.transaction.Transaction;
  * }
  * </pre>
  * 
- * <p>Sessions are not thread-safe. Each thread should obtain its own Session instance.</p>
+ * <p>
+ * Sessions are not thread-safe. Each thread should obtain its own Session
+ * instance.
+ * </p>
  * 
  * @see SessionFactory
  * @see Transaction
  */
 public interface Session extends AutoCloseable {
-    
-    /**
-     * Find an entity by its primary key.
-     * 
-     * @param <T> the entity type
-     * @param entityClass the class of the entity
-     * @param id the primary key value
-     * @return the found entity or null if not found
-     */
+
+    <T> void persist(T entity);
+
     <T> T find(Class<T> entityClass, Object id);
-    
-    /**
-     * Find all entities of the given type.
-     * 
-     * @param <T> the entity type
-     * @param entityClass the class of the entity
-     * @return list of all entities
-     */
-    <T> List<T> findAll(Class<T> entityClass);
-    
-    /**
-     * Save a new entity to the database.
-     * 
-     * @param entity the entity to save
-     */
-    void save(Object entity);
-    
-    /**
-     * Update an existing entity in the database.
-     * 
-     * @param entity the entity to update
-     */
-    void update(Object entity);
-    
-    /**
-     * Delete an entity from the database.
-     * 
-     * @param entity the entity to delete
-     */
-    void delete(Object entity);
-    
-    /**
-     * Create a query for the given entity type.
-     * 
-     * @param <T> the entity type
-     * @param entityClass the class of the entity
-     * @return a new Query instance
-     */
-    <T> Query<T> createQuery(Class<T> entityClass);
-    
-    /**
-     * Begin a new transaction.
-     * 
-     * @return the Transaction object
-     */
+
+    <T> T merge(T entity); // Update or insert
+
+    void remove(Object entity);
+
+    <T> Query<T> createQuery(Class<T> resultClass);
+
     Transaction beginTransaction();
-    
-    /**
-     * Get the current active transaction, if any.
-     * 
-     * @return the active transaction or null
-     */
-    Transaction getTransaction();
-    
-    /**
-     * Check if the session is still open.
-     * 
-     * @return true if open, false if closed
-     */
-    boolean isOpen();
-    
-    /**
-     * Close the session and release resources.
-     */
-    @Override
-    void close();
+
+    void flush(); // Force synchronization
+
 }
