@@ -1,5 +1,8 @@
 package com.dam.framework.session;
 
+import java.util.Map;
+
+import com.dam.framework.mapping.EntityMetadata;
 import com.dam.framework.query.Query;
 import com.dam.framework.transaction.Transaction;
 

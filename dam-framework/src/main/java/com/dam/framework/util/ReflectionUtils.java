@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.dam.framework.exception.DAMException;
-import com.dam.framework.mapping.ColumnMetadata;
-import com.dam.framework.mapping.EntityMetadata;
 
 /**
  * Utility class for common reflection operations.

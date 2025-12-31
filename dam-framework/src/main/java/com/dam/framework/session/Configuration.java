@@ -1,12 +1,18 @@
-package com.dam.framework.config;
+package com.dam.framework.session;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import com.dam.framework.connection.BasicConnectionManager;
 import com.dam.framework.exception.DAMException;
-import com.dam.framework.session.SessionFactory;
+import com.dam.framework.mapping.EntityMetadata;
 import com.dam.framework.util.ClasspathResources;
 
 /**
@@ -33,16 +39,27 @@ import com.dam.framework.util.ClasspathResources;
  * @see SessionFactory
  */
 public class Configuration {
+    // is the builder for session factory
 
-    // TODO: Implement configuration properties and methods
-    private BasicConnectionManager.Builder _conBuilder;
-    Properties _properties = new Properties();
+    // enforces single session factory per configuration (Singleton)
+    private SessionFactory builtFactory;
+
+    // NOT final - builder might be replaced (though currently isn't)
+    private BasicConnectionManager.Builder conBuilder = new BasicConnectionManager.Builder();
+
+    private final Properties properties = new Properties();
+
+    // Entity class registry
+    private final Set<Class<?>> registeredClasses = new HashSet<>();
+
+    private boolean showSQL = false;
 
     /**
      * Creates a new Configuration instance.
      */
     public Configuration() {
         // Default constructor
+
     }
 
     /**
@@ -60,7 +77,7 @@ public class Configuration {
                 throw new DAMException("Configuration file not found at: " + resourcePath);
             }
 
-            _properties.load(is);
+            properties.load(is);
             return this;
         }
     }
@@ -72,7 +89,7 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setUrl(String url) {
-        _conBuilder.url(url);
+        conBuilder.url(url);
         return this;
     }
 
@@ -83,7 +100,7 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setUsername(String username) {
-        _conBuilder.username(username);
+        conBuilder.username(username);
         return this;
     }
 
@@ -95,7 +112,7 @@ public class Configuration {
      */
     public Configuration setPassword(String password) {
         // TODO: Implement
-        _conBuilder.password(password);
+        conBuilder.password(password);
         return this;
     }
 
@@ -106,7 +123,7 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setDriver(String driverClass) {
-        _conBuilder.driverClass(driverClass);
+        conBuilder.driverClass(driverClass);
         return this;
     }
 
@@ -128,7 +145,12 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration addAnnotatedClass(Class<?> entityClass) {
-        // TODO: Implement
+        if (builtFactory != null) {
+            throw new DAMException(
+                    "Cannot add classes after SessionFactory is built. " +
+                            "Create a new Configuration instance.");
+        }
+        registeredClasses.add(entityClass);
         return this;
     }
 
@@ -138,10 +160,10 @@ public class Configuration {
      * @param packageName the package to scan
      * @return this Configuration for method chaining
      */
-    public Configuration scanPackage(String packageName) {
-        // TODO: Implement
-        return this;
-    }
+    // public Configuration scanPackage(String packageName) {
+    // // TODO: Implement
+    // return this;
+    // }
 
     /**
      * Enable or disable SQL logging.
@@ -150,17 +172,42 @@ public class Configuration {
      * @return this Configuration for method chaining
      */
     public Configuration setShowSql(boolean show) {
-        // TODO: Implement
+        showSQL = show;
         return this;
     }
 
     /**
-     * Build and return a SessionFactory based on this configuration.
+     * Return a SessionFactory based on the current configuration object. The first
+     * time call might cost more time to build
      * 
+     * @throws DAMException if missing or pass in wrong arguments
      * @return the configured SessionFactory
      */
-    public SessionFactory buildSessionFactory() {
-        // TODO: Implement SessionFactory creation
-        throw new UnsupportedOperationException("Not yet implemented");
+    SessionFactory buildSessionFactory() {
+
+        // sessionFactory gets a snapshot of metadata, not a mutable reference
+        if (null == builtFactory) {
+
+            try {
+
+                // 1. Build metadata registry from registered entity classes
+                Map<Class<?>, EntityMetadata> metadataRegistry = new HashMap<>();
+                for (Class<?> entityClass : registeredClasses) {
+                    EntityMetadata metadata = new EntityMetadata(entityClass);
+                    metadataRegistry.put(entityClass, metadata);
+                }
+                // 2. Create SessionFactory with metadata registry
+                builtFactory = new SessionFactoryImpl(metadataRegistry, conBuilder.build());
+
+            } catch (IllegalArgumentException e) {
+                throw new DAMException(e.getCause());
+            }
+
+        }
+        // Apply Singleton enforcement to ensure one-one for
+        // configuration-sessionFactory
+        return builtFactory;
+
+        // TODO: Add ConnectionManager and Dialect later
     }
 }

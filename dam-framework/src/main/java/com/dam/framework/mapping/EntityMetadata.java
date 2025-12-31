@@ -52,7 +52,12 @@ public class EntityMetadata {
             throw new DAMException("No annotation @Id is set for class " + entityClass.getSimpleName());
         }
         Field idField = fields.getFirst();
-        this.idColumn = new ColumnMetadata(idField.getName(), idField.getType(), null, false, true);
+        String idColName = idField.getName();
+        if (idField.isAnnotationPresent(Column.class)) {
+            Column colAnnotation = idField.getAnnotation(Column.class);
+            idColName = colAnnotation.name().isBlank() ? idField.getName() : colAnnotation.name();
+        }
+        this.idColumn = new ColumnMetadata(idField, idColName, idField.getType(), null, false, true);
 
         this.columns = new ArrayList<>();
         this.columns.add(idColumn);// also include id column
@@ -62,9 +67,12 @@ public class EntityMetadata {
             String colName = colAnnotation.name().isBlank() ? field.getName() : colAnnotation.name();
             this.columns.add(
                     new ColumnMetadata(
+                            field,
                             colName, field.getType(),
                             null, colAnnotation.nullable(),
-                            colAnnotation.unique()));
+                            colAnnotation.unique()));// `field` is the value of the column in Java program, so that we
+                                                     // can retrieve
+            // later and process in db layer
         }
 
     }
@@ -77,7 +85,7 @@ public class EntityMetadata {
         return tableName;
     }
 
-    public ColumnMetadata getPrimaryKey() {
+    public ColumnMetadata getIdColumn() {
         return idColumn;
     }
 
