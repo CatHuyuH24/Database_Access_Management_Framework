@@ -55,6 +55,13 @@ public class BasicConnectionManager implements ConnectionManager {
   private int currentPoolSize;
   private volatile boolean isShutdown;
 
+  // Connection pool statistics (Sprint 2 enhancement)
+  private long totalConnectionsCreated;
+  private long totalConnectionsAcquired;
+  private long totalConnectionsReleased;
+  private long totalConnectionTimeouts;
+  private long totalValidationFailures;
+
   /**
    * Private constructor for Singleton pattern.
    * Initializes the connection pool with minimum connections.
@@ -82,6 +89,13 @@ public class BasicConnectionManager implements ConnectionManager {
     this.availableConnections = new LinkedBlockingQueue<>();
     this.currentPoolSize = 0;
     this.isShutdown = false;
+
+    // Initialize statistics
+    this.totalConnectionsCreated = 0;
+    this.totalConnectionsAcquired = 0;
+    this.totalConnectionsReleased = 0;
+    this.totalConnectionTimeouts = 0;
+    this.totalValidationFailures = 0;
 
     initializePool();
   }
@@ -119,6 +133,7 @@ public class BasicConnectionManager implements ConnectionManager {
    */
   private Connection createNewConnection() throws SQLException {
     logger.debug("Creating new database connection to: {}", url);
+    totalConnectionsCreated++; // Track statistics
     if (username != null && !username.isEmpty()) {
       return DriverManager.getConnection(url, username, password);
     } else {
@@ -162,6 +177,7 @@ public class BasicConnectionManager implements ConnectionManager {
           conn = availableConnections.poll(timeoutMs, TimeUnit.MILLISECONDS);
 
           if (conn == null) {
+            totalConnectionTimeouts++; // Track statistics
             throw new DAMException(
                 String.format("Connection acquisition timeout after %d ms. Pool size: %d/%d",
                     timeoutMs, currentPoolSize, maxSize));
@@ -172,6 +188,7 @@ public class BasicConnectionManager implements ConnectionManager {
       // Validate connection before returning
       if (!isConnectionValid(conn)) {
         logger.warn("Connection validation failed, creating new connection");
+        totalValidationFailures++; // Track statistics
         try {
           conn.close();
         } catch (SQLException e) {
@@ -182,6 +199,7 @@ public class BasicConnectionManager implements ConnectionManager {
         currentPoolSize++;
       }
 
+      totalConnectionsAcquired++; // Track statistics
       logger.debug("Connection acquired. Available: {}, Total: {}",
           availableConnections.size(), currentPoolSize);
       return conn;
@@ -251,6 +269,7 @@ public class BasicConnectionManager implements ConnectionManager {
       if (isConnectionValid(connection)) {
         boolean added = availableConnections.offer(connection);
         if (added) {
+          totalConnectionsReleased++; // Track statistics
           logger.debug("Connection returned to pool. Available: {}",
               availableConnections.size());
         } else {
@@ -320,6 +339,128 @@ public class BasicConnectionManager implements ConnectionManager {
    */
   public int getTotalConnectionCount() {
     return currentPoolSize;
+  }
+
+  /**
+   * Get connection pool statistics.
+   * <p>
+   * Returns a snapshot of current pool statistics for monitoring and debugging.
+   * 
+   * @return ConnectionPoolStats object
+   * 
+   * @since Sprint 2
+   */
+  public ConnectionPoolStats getStatistics() {
+    return new ConnectionPoolStats(
+        currentPoolSize,
+        availableConnections.size(),
+        maxSize,
+        minSize,
+        totalConnectionsCreated,
+        totalConnectionsAcquired,
+        totalConnectionsReleased,
+        totalConnectionTimeouts,
+        totalValidationFailures);
+  }
+
+  /**
+   * Check the health of the connection pool.
+   * <p>
+   * Returns true if the pool is operational and has available capacity.
+   * 
+   * @return true if pool is healthy
+   * 
+   * @since Sprint 2
+   */
+  public boolean isHealthy() {
+    if (isShutdown) {
+      return false;
+    }
+
+    // Pool is healthy if:
+    // 1. Not shutdown
+    // 2. Has at least minimum connections
+    // 3. Timeout rate is acceptable (< 10% of acquisitions)
+    boolean hasMinConnections = currentPoolSize >= minSize;
+    boolean acceptableTimeoutRate = totalConnectionsAcquired == 0 ||
+        (double) totalConnectionTimeouts / totalConnectionsAcquired < 0.1;
+
+    return hasMinConnections && acceptableTimeoutRate;
+  }
+
+  /**
+   * Get a human-readable status report of the connection pool.
+   * 
+   * @return status report string
+   * 
+   * @since Sprint 2
+   */
+  public String getStatusReport() {
+    ConnectionPoolStats stats = getStatistics();
+    return String.format(
+        "Connection Pool Status:\n" +
+            "  Status: %s\n" +
+            "  Total Connections: %d/%d (min: %d)\n" +
+            "  Available: %d\n" +
+            "  In Use: %d\n" +
+            "  Statistics:\n" +
+            "    Total Created: %d\n" +
+            "    Total Acquired: %d\n" +
+            "    Total Released: %d\n" +
+            "    Timeouts: %d\n" +
+            "    Validation Failures: %d",
+        isHealthy() ? "HEALTHY" : "UNHEALTHY",
+        stats.totalConnections, stats.maxSize, stats.minSize,
+        stats.availableConnections,
+        stats.totalConnections - stats.availableConnections,
+        stats.connectionsCreated,
+        stats.connectionsAcquired,
+        stats.connectionsReleased,
+        stats.connectionTimeouts,
+        stats.validationFailures);
+  }
+
+  /**
+   * Immutable data class holding connection pool statistics.
+   * 
+   * @since Sprint 2
+   */
+  public static class ConnectionPoolStats {
+    public final int totalConnections;
+    public final int availableConnections;
+    public final int maxSize;
+    public final int minSize;
+    public final long connectionsCreated;
+    public final long connectionsAcquired;
+    public final long connectionsReleased;
+    public final long connectionTimeouts;
+    public final long validationFailures;
+
+    private ConnectionPoolStats(int totalConnections, int availableConnections,
+        int maxSize, int minSize,
+        long connectionsCreated, long connectionsAcquired,
+        long connectionsReleased, long connectionTimeouts,
+        long validationFailures) {
+      this.totalConnections = totalConnections;
+      this.availableConnections = availableConnections;
+      this.maxSize = maxSize;
+      this.minSize = minSize;
+      this.connectionsCreated = connectionsCreated;
+      this.connectionsAcquired = connectionsAcquired;
+      this.connectionsReleased = connectionsReleased;
+      this.connectionTimeouts = connectionTimeouts;
+      this.validationFailures = validationFailures;
+    }
+
+    @Override
+    public String toString() {
+      return String.format(
+          "ConnectionPoolStats{total=%d, available=%d, max=%d, min=%d, " +
+              "created=%d, acquired=%d, released=%d, timeouts=%d, validationFailures=%d}",
+          totalConnections, availableConnections, maxSize, minSize,
+          connectionsCreated, connectionsAcquired, connectionsReleased,
+          connectionTimeouts, validationFailures);
+    }
   }
 
   /**
