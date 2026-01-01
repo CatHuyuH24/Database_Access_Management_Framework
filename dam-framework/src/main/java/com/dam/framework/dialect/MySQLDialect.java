@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 
 import com.dam.framework.util.TypeMapper;
+import java.util.List;
 
 /**
  * MySQL-specific SQL dialect implementation.
@@ -12,7 +13,7 @@ import com.dam.framework.util.TypeMapper;
  * Implements Strategy pattern for database-specific SQL generation.
  * Provides MySQL-specific syntax for LIMIT/OFFSET, AUTO_INCREMENT,
  * identifier quoting, and type mappings.
- * 
+ *
  * <h3>MySQL-Specific Features:</h3>
  * <ul>
  * <li><b>Pagination:</b> LIMIT {limit} OFFSET {offset}</li>
@@ -20,13 +21,13 @@ import com.dam.framework.util.TypeMapper;
  * <li><b>Identifier quotes:</b> Backticks (`)</li>
  * <li><b>Boolean type:</b> TINYINT(1)</li>
  * </ul>
- * 
+ *
  * <h3>Design Patterns Used:</h3>
  * <ul>
  * <li><b>Strategy Pattern:</b> Implements Dialect interface for MySQL-specific
  * behavior</li>
  * </ul>
- * 
+ *
  * @author enkay2408
  * @see Dialect
  */
@@ -39,7 +40,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Get the name of this dialect.
-   * 
+   *
    * @return "MySQL"
    */
   @Override
@@ -49,7 +50,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Get the MySQL JDBC driver class name.
-   * 
+   *
    * @return "com.mysql.cj.jdbc.Driver"
    */
   @Override
@@ -59,7 +60,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Get MySQL connection validation query.
-   * 
+   *
    * @return "SELECT 1"
    */
   @Override
@@ -71,17 +72,11 @@ public class MySQLDialect implements Dialect {
    * Get MySQL LIMIT clause with OFFSET.
    * <p>
    * MySQL syntax: LIMIT {limit} OFFSET {offset}
-   * 
+   *
    * @param limit  the maximum number of rows
    * @param offset the number of rows to skip
    * @return SQL LIMIT clause
-   * 
-   * @example
-   * 
-   *          <pre>
-   * getLimitClause(10, 0)  → "LIMIT 10 OFFSET 0"
-   * getLimitClause(20, 40) → "LIMIT 20 OFFSET 40"
-   *          </pre>
+   *
    */
   @Override
   public String getLimitClause(int limit, int offset) {
@@ -100,7 +95,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Get MySQL auto-increment column definition.
-   * 
+   *
    * @return "AUTO_INCREMENT"
    */
   @Override
@@ -112,11 +107,11 @@ public class MySQLDialect implements Dialect {
    * Get MySQL-specific type name for a JDBC type.
    * <p>
    * Maps Java SQL types to MySQL column types.
-   * 
+   *
    * @param sqlType the JDBC type code (from java.sql.Types)
    * @param length  the column length (for string types)
    * @return MySQL type name
-   * 
+   *
    * @see java.sql.Types
    */
   @Override
@@ -201,7 +196,7 @@ public class MySQLDialect implements Dialect {
    * Check if MySQL supports sequences.
    * <p>
    * MySQL does not support sequences (uses AUTO_INCREMENT instead).
-   * 
+   *
    * @return false
    */
   @Override
@@ -214,7 +209,7 @@ public class MySQLDialect implements Dialect {
    * <p>
    * MySQL does not support sequences, so this throws
    * UnsupportedOperationException.
-   * 
+   *
    * @param sequenceName the sequence name (ignored)
    * @return not applicable
    * @throws UnsupportedOperationException always thrown
@@ -228,35 +223,34 @@ public class MySQLDialect implements Dialect {
    * Get MySQL identifier quote character.
    * <p>
    * MySQL uses backticks (`) to quote identifiers (table/column names).
-   * 
+   *
    * @return '`' (backtick)
-   * 
-   * @example
-   * 
-   *          <pre>
-   * `user_table`
-   * `first_name`
-   *          </pre>
+   *
    */
   @Override
   public char getIdentifierQuoteCharacter() {
     return QUOTE_CHAR;
   }
 
+  @Override
+  public PaginationFragment getPaginationFragment(Integer limit, Integer offset) {
+    if (limit == null) return new PaginationFragment("", List.of());
+
+    if (offset != null && offset > 0) {
+      return new PaginationFragment(" LIMIT ? OFFSET ?", List.of(limit, offset));
+    } else {
+      return new PaginationFragment(" LIMIT ?", List.of(limit));
+    }
+  }
+
   /**
    * Quote a SQL identifier (table or column name) using MySQL backticks.
    * <p>
    * Helper method for properly quoting identifiers.
-   * 
+   *
    * @param identifier the identifier to quote
    * @return quoted identifier
-   * 
-   * @example
-   * 
-   *          <pre>
-   * quoteIdentifier("users")      → "`users`"
-   * quoteIdentifier("first_name") → "`first_name`"
-   *          </pre>
+   *
    */
   public String quoteIdentifier(String identifier) {
     if (identifier == null || identifier.isEmpty()) {
@@ -269,7 +263,7 @@ public class MySQLDialect implements Dialect {
    * Get the LAST_INSERT_ID() function call for MySQL.
    * <p>
    * Used to retrieve the auto-generated ID after INSERT.
-   * 
+   *
    * @return "SELECT LAST_INSERT_ID()"
    */
   public String getLastInsertIdQuery() {
@@ -280,16 +274,9 @@ public class MySQLDialect implements Dialect {
    * Get MySQL-specific CONCAT function.
    * <p>
    * Concatenates multiple string values.
-   * 
+   *
    * @param values the values to concatenate
    * @return CONCAT SQL function call
-   * 
-   * @example
-   * 
-   *          <pre>
-   * getConcatFunction("first_name", "' '", "last_name") 
-   *   → "CONCAT(first_name, ' ', last_name)"
-   *          </pre>
    */
   public String getConcatFunction(String... values) {
     if (values == null || values.length == 0) {
@@ -300,7 +287,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Check if a given SQL type is a numeric type.
-   * 
+   *
    * @param sqlType the JDBC type code
    * @return true if numeric type
    */
@@ -323,7 +310,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Check if a given SQL type is a string type.
-   * 
+   *
    * @param sqlType the JDBC type code
    * @return true if string type
    */
@@ -341,7 +328,7 @@ public class MySQLDialect implements Dialect {
 
   /**
    * Check if a given SQL type is a date/time type.
-   * 
+   *
    * @param sqlType the JDBC type code
    * @return true if date/time type
    */
@@ -361,10 +348,10 @@ public class MySQLDialect implements Dialect {
    * <p>
    * This method delegates to TypeMapper for consistent type mapping
    * across the framework.
-   * 
+   *
    * @param javaType the Java class
    * @return the JDBC type code
-   * 
+   *
    * @see TypeMapper#getJdbcType(Class)
    */
   public int getJdbcTypeForJavaType(Class<?> javaType) {
@@ -376,10 +363,10 @@ public class MySQLDialect implements Dialect {
    * <p>
    * This method delegates to TypeMapper for consistent type mapping
    * across the framework.
-   * 
+   *
    * @param jdbcType the JDBC type code
    * @return the corresponding Java class
-   * 
+   *
    * @see TypeMapper#getJavaType(int)
    */
   public Class<?> getJavaTypeForJdbcType(int jdbcType) {
@@ -391,24 +378,15 @@ public class MySQLDialect implements Dialect {
    * <p>
    * This is a convenience method that handles null values and type-specific
    * parameter setting for MySQL.
-   * 
+   *
    * @param stmt           the PreparedStatement
    * @param parameterIndex the parameter index (1-based)
    * @param value          the parameter value (can be null)
    * @param javaType       the Java type of the value
    * @throws SQLException if parameter setting fails
-   * 
-   * @example
-   * 
-   *          <pre>
-   *          MySQLDialect dialect = new MySQLDialect();
-   *          dialect.setParameter(stmt, 1, "John", String.class);
-   *          dialect.setParameter(stmt, 2, 25, Integer.class);
-   *          dialect.setParameter(stmt, 3, null, String.class);
-   *          </pre>
    */
   public void setParameter(PreparedStatement stmt, int parameterIndex, Object value, Class<?> javaType)
-      throws SQLException {
+          throws SQLException {
     if (value == null) {
       int jdbcType = TypeMapper.getJdbcType(javaType);
       stmt.setNull(parameterIndex, jdbcType);
@@ -439,17 +417,10 @@ public class MySQLDialect implements Dialect {
    * <p>
    * Combines TypeMapper and getTypeName for convenient Java-to-MySQL type
    * mapping.
-   * 
+   *
    * @param javaType the Java class
    * @param length   the column length (for string types)
    * @return MySQL type name
-   * 
-   * @example
-   * 
-   *          <pre>
-   *          String mysqlType = dialect.getMySQLTypeForJavaType(String.class, 100);
-   *          // Returns "VARCHAR(100)"
-   *          </pre>
    */
   public String getMySQLTypeForJavaType(Class<?> javaType, int length) {
     int jdbcType = TypeMapper.getJdbcType(javaType);
@@ -459,8 +430,8 @@ public class MySQLDialect implements Dialect {
   @Override
   public String toString() {
     return "MySQLDialect{" +
-        "name='" + DIALECT_NAME + '\'' +
-        ", driver='" + DRIVER_CLASS + '\'' +
-        '}';
+            "name='" + DIALECT_NAME + '\'' +
+            ", driver='" + DRIVER_CLASS + '\'' +
+            '}';
   }
 }
