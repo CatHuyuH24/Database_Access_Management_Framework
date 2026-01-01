@@ -1,0 +1,72 @@
+package com.dam.framework.sql;
+
+import com.dam.framework.mapping.ColumnMetadata;
+import com.dam.framework.mapping.EntityMetadata;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class SQLGeneratorImpl implements SQLGenerator {
+
+    @Override
+    public String generateInsert(EntityMetadata metadata) {
+        // Get all columns
+        List<ColumnMetadata> columns = metadata.getColumns();
+
+        String tableName = getFullTableName(metadata);
+        String columnNames = columns.stream()
+                .map(ColumnMetadata::columnName)
+                .collect(Collectors.joining(", "));
+
+        String placeholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
+
+        return String.format("INSERT INTO %s (%s) VALUES (%s)", tableName, columnNames, placeholders);
+    }
+
+    @Override
+    public String generateSelect(EntityMetadata metadata) {
+        // SELECT * FROM schema.table
+        return String.format("SELECT * FROM %s", getFullTableName(metadata));
+    }
+
+    @Override
+    public String generateSelectById(EntityMetadata metadata) {
+        // SELECT * FROM schema.table WHERE id_column = ?
+        return String.format("SELECT * FROM %s WHERE %s = ?",
+                getFullTableName(metadata),
+                metadata.getIdColumn().columnName());
+    }
+
+    @Override
+    public String generateUpdate(EntityMetadata metadata) {
+        // UPDATE schema.table SET col1 = ?, col2 = ? WHERE id_column = ?
+        String tableName = getFullTableName(metadata);
+
+        String setClause = metadata.getColumns().stream()
+                .filter(col -> !col.columnName().equalsIgnoreCase(metadata.getIdColumn().columnName()))
+                .map(col -> col.columnName() + " = ?")
+                .collect(Collectors.joining(", "));
+
+        return String.format("UPDATE %s SET %s WHERE %s = ?",
+                tableName,
+                setClause,
+                metadata.getIdColumn().columnName());
+    }
+
+    @Override
+    public String generateDelete(EntityMetadata metadata) {
+        // DELETE FROM schema.table WHERE id_column = ?
+        return String.format("DELETE FROM %s WHERE %s = ?",
+                getFullTableName(metadata),
+                metadata.getIdColumn().columnName());
+    }
+
+    private String getFullTableName(EntityMetadata metadata) {
+        String schema = metadata.getSchema();
+        String table = metadata.getTableName();
+        if (schema != null && !schema.isBlank() && !"public".equalsIgnoreCase(schema)) {
+            return schema + "." + table;
+        }
+        return table;
+    }
+}
