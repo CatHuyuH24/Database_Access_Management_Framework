@@ -10,11 +10,11 @@ import java.util.List;
  * <pre>
  * {@code
  * List<User> users = session.createQuery(User.class)
- *     .where("age > ?", 18)
- *     .and("status = ?", "active")
- *     .orderBy("name", Order.ASC)
- *     .limit(10)
- *     .getResultList();
+ *         .where("age > ?", 18)
+ *         .and("status = ?", "active")
+ *         .orderBy("name", Order.ASC)
+ *         .limit(10)
+ *         .getResultList();
  * }
  * </pre>
  *
@@ -103,8 +103,10 @@ public interface Query<T> {
     /**
      * Execute the query and return a single result.
      *
-     * @return the single result or null if no results
-     * @throws com.dam.framework.exception.DAMException if multiple results exist
+     * @return the exact single result
+     * @throws com.dam.framework.exception.DAMException if multiple results or no
+     *                                                  results exist
+     * 
      */
     T getSingleResult();
 

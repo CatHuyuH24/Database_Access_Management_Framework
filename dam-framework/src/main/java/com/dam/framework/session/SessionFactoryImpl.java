@@ -5,8 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.dam.framework.connection.ConnectionManager;
+import com.dam.framework.dialect.Dialect;
 import com.dam.framework.exception.DAMException;
 import com.dam.framework.mapping.EntityMetadata;
+import com.dam.framework.sql.SQLGenerator;
+import com.dam.framework.sql.SQLGeneratorImpl;
 
 class SessionFactoryImpl implements SessionFactory, InternalSessionFactory {
 
@@ -20,11 +23,20 @@ class SessionFactoryImpl implements SessionFactory, InternalSessionFactory {
     // Track which connection belongs to which session (for proper cleanup)
     private final Map<Session, Connection> sessionConnections = new HashMap<>();
 
-    private boolean isOpen = true;
+    // ThreadLocal for session-per-thread pattern
+    private final ThreadLocal<Session> threadLocalSession = new ThreadLocal<>();
 
-    SessionFactoryImpl(Map<Class<?>, EntityMetadata> metadataRegistry, ConnectionManager connectionManager) {
+    private boolean isOpen = true;
+    private final SQLGenerator sqlGenerator = new SQLGeneratorImpl();
+    private final Dialect dialect;
+    private final boolean showSQL;
+
+    SessionFactoryImpl(Map<Class<?>, EntityMetadata> metadataRegistry,
+            ConnectionManager connectionManager, Dialect dialect, boolean showSQL) {
         this.metadataRegistry = metadataRegistry;
         this.connectionManager = connectionManager;
+        this.dialect = dialect;
+        this.showSQL = showSQL;
     }
 
     @Override
@@ -33,8 +45,7 @@ class SessionFactoryImpl implements SessionFactory, InternalSessionFactory {
         Connection conn = connectionManager.getConnection();
 
         // Create session with read-only metadata access
-        Session session = new SessionImpl(this, conn); // Pass 'this' as both InternalSessionFactory and
-                                                       // MetadataRegistry
+        Session session = new SessionImpl(this, conn, sqlGenerator, dialect, showSQL);
 
         // Track session and its connection
         sessionConnections.put(session, conn);
@@ -44,8 +55,27 @@ class SessionFactoryImpl implements SessionFactory, InternalSessionFactory {
 
     @Override
     public Session getCurrentSession() {
-        // For MVP 1, simple openSession is enough
-        return openSession();
+        // Check if current thread already has a session
+        Session session = threadLocalSession.get();
+
+        if (session != null && !isClosed(session)) {
+            return session;
+        }
+
+        // No session for current thread - create new one
+        session = openSession();
+        threadLocalSession.set(session);
+
+        return session;
+    }
+
+    /**
+     * Check if a session is closed.
+     * Helper method for getCurrentSession().
+     */
+    private boolean isClosed(Session session) {
+        // Session is closed if it's not in our tracking map
+        return !sessionConnections.containsKey(session);
     }
 
     @Override
@@ -77,6 +107,11 @@ class SessionFactoryImpl implements SessionFactory, InternalSessionFactory {
     @Override
     public void sessionClosed(Session session) {
         connectionManager.releaseConnection(sessionConnections.remove(session));
+
+        // Clean up ThreadLocal if this was the current thread's session
+        if (threadLocalSession.get() == session) {
+            threadLocalSession.remove();
+        }
     }
 
     @Override

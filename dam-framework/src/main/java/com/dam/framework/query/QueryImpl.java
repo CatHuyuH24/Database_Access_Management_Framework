@@ -1,9 +1,12 @@
 package com.dam.framework.query;
 
-import com.dam.framework.annotations.Column;
-import com.dam.framework.annotations.Table;
 import com.dam.framework.dialect.Dialect;
 import com.dam.framework.exception.DAMException;
+import com.dam.framework.mapping.ColumnMetadata;
+import com.dam.framework.mapping.EntityMetadata;
+import com.dam.framework.util.ReflectionUtils;
+import com.dam.framework.util.TypeMapper;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,8 +14,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class QueryImpl<T> implements Query<T> {
 
@@ -20,12 +21,15 @@ public class QueryImpl<T> implements Query<T> {
     private final QueryContext context = new QueryContext();
     private final Dialect dialect;
     private final Connection connection;
-    private static final Logger logger = LoggerFactory.getLogger(QueryImpl.class);
+    private final EntityMetadata metadata;
+    // private static final Logger logger =
+    // LoggerFactory.getLogger(QueryImpl.class);
 
-    public QueryImpl(Class<T> entityClass, Connection connection, Dialect dialect) {
+    public QueryImpl(Class<T> entityClass, Connection connection, Dialect dialect, EntityMetadata metadata) {
         this.entityClass = entityClass;
         this.connection = connection;
         this.dialect = dialect;
+        this.metadata = metadata;
     }
 
     @Override
@@ -115,8 +119,7 @@ public class QueryImpl<T> implements Query<T> {
         sql.append(context.selectColumns.isEmpty() ? "*" : String.join(", ", context.selectColumns));
 
         // 2. FROM
-        String tableName = getTableName();
-        sql.append(" FROM ").append(tableName);
+        sql.append(" FROM ").append(metadata.getTableName());
 
         // 3. WHERE
         if (!context.whereConditions.isEmpty()) {
@@ -154,26 +157,38 @@ public class QueryImpl<T> implements Query<T> {
         List<T> results = new ArrayList<>();
 
         // Get list of field returned from db
-        java.sql.ResultSetMetaData metaData = rs.getMetaData();
-        int columnCount = metaData.getColumnCount();
+        // java.sql.ResultSetMetaData metaData = rs.getMetaData();
+        // int columnCount = metaData.getColumnCount();
 
         try {
             while (rs.next()) {
                 // 1. New entity instance
                 T entity = entityClass.getDeclaredConstructor().newInstance();
 
-                // 2. Loop through fields from result set
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnLabel(i);
-                    Object value = rs.getObject(i);
-
-                    if (value == null) {
-                        continue;
+                // 2. Loop through fields in metadata, map value into field if exist in the
+                // resultSet
+                for (ColumnMetadata col : metadata.getColumns()) {
+                    try {
+                        Object value = TypeMapper.getResultSetValue(rs, col.columnName(), col.getClass());
+                        ReflectionUtils.setFieldValue(entity, col.field(), value);
+                    } catch (SQLException e) {
+                        // Column might not be in SELECT list - skip
                     }
-
-                    // 3. Map value into field
-                    setProperty(entity, rs, i, columnName);
                 }
+
+                // for (int i = 1; i <= columnCount; i++) {
+                // String columnName = metaData.getColumnLabel(i);
+                // Object value = rs.getObject(i);
+
+                // if (value == null) {
+                // continue;
+                // }
+
+                // ReflectionUtils.setFieldValue(entity, null, value);
+
+                //
+                // setProperty(entity, rs, i, columnName);
+                // }
                 results.add(entity);
             }
         } catch (Exception e) {
@@ -182,85 +197,86 @@ public class QueryImpl<T> implements Query<T> {
         return results;
     }
 
-    private String getTableName() {
-        if (entityClass.isAnnotationPresent(Table.class)) {
-            String name = entityClass.getAnnotation(Table.class).name();
-            if (!name.isEmpty()) {
-                return name;
-            }
-        }
-        return entityClass.getSimpleName().toLowerCase();
-    }
+    // private String getTableName() {
+    // if (entityClass.isAnnotationPresent(Table.class)) {
+    // String name = entityClass.getAnnotation(Table.class).name();
+    // if (!name.isEmpty()) {
+    // return name;
+    // }
+    // }
+    // return entityClass.getSimpleName().toLowerCase();
+    // }
 
-    private void setProperty(T entity, ResultSet rs, int columnIndex, String columnName) {
-        try {
-            java.lang.reflect.Field field = findFieldByColumnName(entityClass, columnName);
+    // private void setProperty(T entity, ResultSet rs, int columnIndex, String
+    // columnName) {
+    // try {
+    // java.lang.reflect.Field field = findFieldByColumnName(entityClass,
+    // columnName);
 
-            if (field != null) {
-                field.setAccessible(true);
-                Object convertedValue = com.dam.framework.util.TypeMapper.getResultSetValue(
-                        rs, columnIndex, field.getType()
-                );
-                field.set(entity, convertedValue);
-            }
-        } catch (Exception e) {
-            logger.error("Could not map column: {} to entity {}", columnName,
-                    entityClass.getSimpleName());
-        }
-    }
+    // if (field != null) {
+    // field.setAccessible(true);
+    // Object convertedValue = com.dam.framework.util.TypeMapper.getResultSetValue(
+    // rs, columnIndex, field.getType());
+    // field.set(entity, convertedValue);
+    // }
+    // } catch (Exception e) {
+    // logger.error("Could not map column: {} to entity {}", columnName,
+    // entityClass.getSimpleName());
+    // }
+    // }
 
-    private java.lang.reflect.Field findFieldByColumnName(Class<?> clazz, String columnName) {
-        for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(Column.class)) {
-                String annotatedName = field.getAnnotation(Column.class)
-                        .name();
-                if (columnName.equalsIgnoreCase(annotatedName)) {
-                    return field;
-                }
-            }
-        }
+    // private java.lang.reflect.Field findFieldByColumnName(Class<?> clazz, String
+    // columnName) {
+    // for (java.lang.reflect.Field field : clazz.getDeclaredFields()) {
+    // if (field.isAnnotationPresent(Column.class)) {
+    // String annotatedName = field.getAnnotation(Column.class)
+    // .name();
+    // if (columnName.equalsIgnoreCase(annotatedName)) {
+    // return field;
+    // }
+    // }
+    // }
 
-        String fieldName = convertToCamelCase(columnName);
-        try {
-            return clazz.getDeclaredField(fieldName);
-        } catch (NoSuchFieldException e) {
-            if (clazz.getSuperclass() != null && clazz.getSuperclass() != Object.class) {
-                return findFieldByColumnName(clazz.getSuperclass(), columnName);
-            }
-        }
-        return null;
-    }
+    // String fieldName = convertToCamelCase(columnName);
+    // try {
+    // return clazz.getDeclaredField(fieldName);
+    // } catch (NoSuchFieldException e) {
+    // if (clazz.getSuperclass() != null && clazz.getSuperclass() != Object.class) {
+    // return findFieldByColumnName(clazz.getSuperclass(), columnName);
+    // }
+    // }
+    // return null;
+    // }
 
-    private String convertToCamelCase(String input) {
-        StringBuilder result = new StringBuilder();
-        boolean nextUpper = false;
-        for (char c : input.toLowerCase().toCharArray()) {
-            if (c == '_') {
-                nextUpper = true;
-            } else {
-                if (nextUpper) {
-                    result.append(Character.toUpperCase(c));
-                    nextUpper = false;
-                } else {
-                    result.append(c);
-                }
-            }
-        }
-        return result.toString();
-    }
+    // private String convertToCamelCase(String input) {
+    // StringBuilder result = new StringBuilder();
+    // boolean nextUpper = false;
+    // for (char c : input.toLowerCase().toCharArray()) {
+    // if (c == '_') {
+    // nextUpper = true;
+    // } else {
+    // if (nextUpper) {
+    // result.append(Character.toUpperCase(c));
+    // nextUpper = false;
+    // } else {
+    // result.append(c);
+    // }
+    // }
+    // }
+    // return result.toString();
+    // }
 
     @Override
     public T getSingleResult() {
         List<T> list = getResultList();
         if (list.isEmpty()) {
-            return null;
+            throw new DAMException("Query returned no results");
         }
         if (list.size() > 1) {
             throw new DAMException("Multiple results found");
         }
         return list.getFirst();
     }
-
 
     static class QueryContext {
 

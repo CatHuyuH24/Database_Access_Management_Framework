@@ -44,7 +44,7 @@ public class MySQLDialect implements Dialect {
    * @return "MySQL"
    */
   @Override
-  public String getName() {
+  public String getDialectName() {
     return DIALECT_NAME;
   }
 
@@ -234,7 +234,8 @@ public class MySQLDialect implements Dialect {
 
   @Override
   public PaginationFragment getPaginationFragment(Integer limit, Integer offset) {
-    if (limit == null) return new PaginationFragment("", List.of());
+    if (limit == null)
+      return new PaginationFragment("", List.of());
 
     if (offset != null && offset > 0) {
       return new PaginationFragment(" LIMIT ? OFFSET ?", List.of(limit, offset));
@@ -386,7 +387,7 @@ public class MySQLDialect implements Dialect {
    * @throws SQLException if parameter setting fails
    */
   public void setParameter(PreparedStatement stmt, int parameterIndex, Object value, Class<?> javaType)
-          throws SQLException {
+      throws SQLException {
     if (value == null) {
       int jdbcType = TypeMapper.getJdbcType(javaType);
       stmt.setNull(parameterIndex, jdbcType);
@@ -430,8 +431,8 @@ public class MySQLDialect implements Dialect {
   @Override
   public String toString() {
     return "MySQLDialect{" +
-            "name='" + DIALECT_NAME + '\'' +
-            ", driver='" + DRIVER_CLASS + '\'' +
-            '}';
+        "name='" + DIALECT_NAME + '\'' +
+        ", driver='" + DRIVER_CLASS + '\'' +
+        '}';
   }
 }

@@ -2,8 +2,6 @@ package com.dam.framework.connection;
 
 import java.sql.Connection;
 
-import com.dam.framework.annotations.Table;
-
 /**
  * Interface for managing database connections.
  * <p>

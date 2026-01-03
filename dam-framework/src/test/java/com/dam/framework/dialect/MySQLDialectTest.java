@@ -45,7 +45,7 @@ class MySQLDialectTest {
   @Order(1)
   @DisplayName("Should return correct dialect name")
   void testGetName() {
-    assertEquals("MySQL", dialect.getName());
+    assertEquals("MySQL", dialect.getDialectName());
   }
 
   /**

@@ -24,7 +24,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.dam.framework.config.DialectType;
 import com.dam.framework.connection.BasicConnectionManager;
 import com.dam.framework.connection.ConnectionManager;
 import com.dam.framework.dialect.DialectFactory;
@@ -84,7 +83,7 @@ class MySQLIntegrationTest {
         .build();
 
     // Initialize MySQL dialect
-    dialect = (MySQLDialect) DialectFactory.createDialect(DialectType.MYSQL);
+    dialect = (MySQLDialect) DialectFactory.createDialect("mysql");
 
     logger.info("Test setup complete");
   }

@@ -1,11 +1,14 @@
 package com.dam.framework.dialect;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
  * Interface for database-specific SQL generation.
  * <p>
- * Implements the Strategy Pattern to support multiple database systems. Each supported database has
+ * Implements the Strategy Pattern to support multiple database systems. Each
+ * supported database has
  * its own Dialect implementation.
  *
  * @see MySQLDialect
@@ -17,7 +20,7 @@ public interface Dialect {
      *
      * @return the dialect name
      */
-    String getName();
+    String getDialectName();
 
     /**
      * Get the default JDBC driver class name.
@@ -85,4 +88,15 @@ public interface Dialect {
     record PaginationFragment(String sql, List<Object> parameters) {
 
     }
+
+    /**
+     * Set a parameter value in PreparedStatement with proper type handling.
+     * 
+     * @param stmt           the PreparedStatement
+     * @param parameterIndex the parameter index (1-based)
+     * @param value          the parameter value (can be null)
+     * @param javaType       the Java type of the value
+     * @throws SQLException if parameter setting fails
+     */
+    void setParameter(PreparedStatement stmt, int index, Object value, Class<?> javaType) throws SQLException;
 }
