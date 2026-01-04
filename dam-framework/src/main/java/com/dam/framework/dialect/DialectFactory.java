@@ -63,20 +63,14 @@ public class DialectFactory {
 
     String normalized = dialectName.trim().toUpperCase();
 
-    try {
-      switch (normalized) {
-        case "mysql":
-          return new MySQLDialect();
-
-        default:
-          return null;
-      }
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(
+    return switch (normalized) {
+      case "MYSQL" -> new MySQLDialect();
+      case "POSTGRESQL", "POSTGRES" -> new PostgreSQLDialect();
+      case "SQLSERVER", "MSSQL" -> new SQLServerDialect();
+      default -> throw new IllegalArgumentException(
           "Unsupported dialect name: " + dialectName +
-              ". Supported values: MYSQL, POSTGRESQL, SQLSERVER, SQLITE",
-          e);
-    }
+              ". Supported values: MYSQL, POSTGRESQL, SQLSERVER");
+    };
   }
 
   /**
@@ -86,8 +80,6 @@ public class DialectFactory {
    * 
    */
   public static String[] getSupportedDialects() {
-    // Currently only MySQL is supported in Sprint 1
-    // This will expand in Sprint 5
-    return new String[] { "mysql" };
+    return new String[] { "mysql", "postgresql", "sqlserver" };
   }
 }
