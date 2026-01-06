@@ -9,10 +9,11 @@ import java.lang.annotation.Target;
  * Specifies that the primary key value should be generated automatically.
  * 
  * <pre>
- * {@code
- * @Id
- * @GeneratedValue(strategy = GenerationType.IDENTITY)
- * private Long id;
+ * {
+ *     &#64;code
+ *     &#64;Id
+ *     @GeneratedValue(strategy = GenerationType.IDENTITY)
+ *     private Long id;
  * }
  * </pre>
  * 
@@ -22,9 +23,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface GeneratedValue {
-    
+
     /**
      * The strategy for generating primary key values.
+     * By default, it's IDENTITY
      * 
      * @return the generation strategy
      */
