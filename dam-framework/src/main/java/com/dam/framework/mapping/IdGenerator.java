@@ -23,8 +23,11 @@ public interface IdGenerator {
   /**
    * Generate a new ID value.
    * 
-   * @param connection the database connection
-   * @param dialect    the database dialect
+   *
+   * @param connection the database connection, not used for UUID generation (will
+   *                   be application-side)
+   * @param dialect    the database dialect, not used for UUID generation (will be
+   *                   database-independent)
    * @param metadata   the entity metadata
    * @return the generated ID value
    */

@@ -18,18 +18,13 @@ public class IdGeneratorFactory {
    * @throws DAMException if strategy is not supported
    */
   public static IdGenerator createGenerator(GenerationType strategy) {
-    if (strategy == null) {
-      throw new DAMException("GenerationType cannot be null");
-    }
 
     return switch (strategy) {
       case IDENTITY -> new IdentityGenerator();
       case SEQUENCE -> new SequenceStyleGenerator();
       case UUID -> new UUIDGenerator();
-      case TABLE -> throw new DAMException(
-          "TABLE generation strategy not yet implemented. Use IDENTITY, SEQUENCE, or UUID instead.");
-      case NONE -> throw new DAMException(
-          "NONE strategy does not use auto-generation. Set ID value manually.");
+      case NONE -> NoOpGenerator.INSTANCE;
+      default -> throw new DAMException("Unsupported strategy: " + strategy);
     };
   }
 

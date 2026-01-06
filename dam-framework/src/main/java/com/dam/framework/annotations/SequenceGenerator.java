@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  *   &#64;code
  *   &#64;Id
  *   &#64;GeneratedValue(strategy = GenerationType.SEQUENCE)
- *   @SequenceGenerator(name = "user_seq", sequenceName = "user_id_seq", allocationSize = 1)
+ *   @SequenceGenerator(name = "user_seq", sequenceName = "user_id_seq")
  *   private Long id;
  * }
  * </pre>
@@ -40,13 +40,6 @@ public @interface SequenceGenerator {
    * @return the sequence name in the database
    */
   String sequenceName() default "";
-
-  /**
-   * The value to increment by when allocating sequence numbers from the sequence.
-   * 
-   * @return the allocation size (default is 50 for performance)
-   */
-  int allocationSize() default 50;
 
   /**
    * The initial value to be used for the sequence.

@@ -97,8 +97,19 @@ public final class SQLGeneratorImpl implements SQLGenerator {
             throw new DAMException("No columns to update");
         }
 
+        // Filter out ID column from changed columns - ID should never be updated
+        ColumnMetadata idColumn = metadata.getIdColumn();
+        List<ColumnMetadata> updatableColumns = changedColumns.stream()
+                .filter(col -> !col.columnName().equalsIgnoreCase(idColumn.columnName()))
+                .collect(Collectors.toList());
+
+        // If only the ID was in changedColumns, nothing to update
+        if (updatableColumns.isEmpty()) {
+            throw new DAMException("No updatable columns found. ID column cannot be updated.");
+        }
+
         String tableName = getFullTableName(metadata);
-        String setClause = changedColumns.stream()
+        String setClause = updatableColumns.stream()
                 .map(col -> col.columnName() + " = ?")
                 .collect(Collectors.joining(", "));
 

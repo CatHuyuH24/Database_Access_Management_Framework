@@ -24,12 +24,6 @@ public enum GenerationType {
     SEQUENCE,
 
     /**
-     * Indicates that a database table will be used to generate unique keys.
-     * A separate table stores the next available ID for each entity.
-     */
-    TABLE,
-
-    /**
      * Indicates that a UUID (Universally Unique Identifier) should be generated.
      * This strategy is database-independent and generates 36-character UUIDs.
      * Best for distributed systems where database-generated IDs may conflict.

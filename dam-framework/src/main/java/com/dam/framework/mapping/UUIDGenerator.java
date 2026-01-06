@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.util.UUID;
 
 import com.dam.framework.dialect.Dialect;
+import com.dam.framework.exception.DAMException;
 
 /**
  * ID generator that creates UUID (Universally Unique Identifier) values.
@@ -47,7 +48,16 @@ public class UUIDGenerator implements IdGenerator {
 
   @Override
   public Object generate(Connection connection, Dialect dialect, EntityMetadata metadata) {
-    // Generate UUID using Java's built-in UUID generator
+    Class<?> idType = metadata.getIdColumn().javaType();
+    if (idType != String.class && idType != java.util.UUID.class) {
+      throw new DAMException(
+          "UUID strategy requires String or UUID field type, but found: " + idType);
+    }
+    /*
+     * UUID generator always returns String, but doesn't validate that the field
+     * type is compatible. If user annotates a `Long id` field with
+     * `@GeneratedValue(strategy = UUID)`, runtime error occurs.
+     */
     return UUID.randomUUID().toString();
   }
 
