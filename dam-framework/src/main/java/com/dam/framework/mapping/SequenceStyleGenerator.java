@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import com.dam.framework.annotations.SequenceGenerator;
 import com.dam.framework.dialect.Dialect;
 import com.dam.framework.exception.DAMException;
+import com.dam.framework.util.IdTypeConverter;
 
 /**
  * ID generator using database sequences.
@@ -70,15 +71,9 @@ public class SequenceStyleGenerator implements IdGenerator {
       if (rs.next()) {
         Object nextVal = rs.getObject(1);
 
-        // Convert to appropriate type (Long, Integer, etc.)
+        // Convert to appropriate type using centralized converter
         Class<?> idType = metadata.getIdColumn().javaType();
-        if (idType == Long.class || idType == long.class) {
-          return ((Number) nextVal).longValue();
-        } else if (idType == Integer.class || idType == int.class) {
-          return ((Number) nextVal).intValue();
-        } else {
-          return nextVal;
-        }
+        return IdTypeConverter.convert(nextVal, idType);
       } else {
         throw new DAMException("Failed to retrieve next value from sequence: " + sequenceName);
       }

@@ -3,16 +3,29 @@ package com.dam.framework.util;
 /**
  * Utility class for converting ID values to appropriate Java types.
  * <p>
- * Applies the Template Method pattern by providing a common conversion
- * algorithm that handles numeric ID type conversions consistently
- * across the framework (SequenceStyleGenerator, SessionImpl, etc.).
+ * Implements the DRY (Don't Repeat Yourself) principle by centralizing
+ * ID type conversion logic that was previously duplicated across multiple
+ * components (SequenceStyleGenerator, SessionImpl, etc.).
+ * <p>
+ * This eliminates code duplication and provides a single source of truth
+ * for ID type conversion rules, improving maintainability and consistency.
  * 
  * <h3>Supported Conversions:</h3>
  * <ul>
  * <li>Any Number → Long/long</li>
  * <li>Any Number → Integer/int</li>
+ * <li>Any Number → Short/short</li>
  * <li>Pass-through for String, UUID, and other types</li>
  * </ul>
+ * 
+ * <h3>Usage Examples:</h3>
+ * 
+ * <pre>{@code
+ * // Converting database-generated ID to entity field type
+ * Object generatedId = rs.getObject(1);
+ * Class<?> idType = metadata.getIdColumn().javaType();
+ * Object converted = IdTypeConverter.convert(generatedId, idType);
+ * }</pre>
  * 
  * @see com.dam.framework.mapping.SequenceStyleGenerator
  * @see com.dam.framework.session.SessionImpl
@@ -26,12 +39,14 @@ public final class IdTypeConverter {
     /**
      * Convert an ID value to the target type.
      * <p>
-     * This is the template method that provides consistent ID type conversion
-     * across all ID generators and session operations.
+     * Provides consistent ID type conversion across all ID generators and
+     * session operations. Handles numeric type conversions (Long, Integer, Short)
+     * and passes through non-numeric types (String, UUID) unchanged.
      * 
      * @param value      the raw ID value (typically from database or generator)
      * @param targetType the expected Java type for the ID field
-     * @return the converted value matching the target type
+     * @return the converted value matching the target type, or null if value is
+     *         null
      */
     public static Object convert(Object value, Class<?> targetType) {
         if (value == null) {
