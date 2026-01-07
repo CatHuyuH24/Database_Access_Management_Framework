@@ -5,17 +5,21 @@ import com.dam.framework.annotations.Id;
 import com.dam.framework.annotations.Table;
 import com.dam.framework.exception.DAMException;
 import com.dam.framework.mapping.EntityMetadata;
+import com.dam.framework.mapping.util.MappingValidationUtils;
 import com.dam.framework.util.ReflectionUtils;
 import java.lang.reflect.Field;
 import java.util.List;
 
+/**
+ * Default mapping strategy for entities without inheritance.
+ */
 public class DefaultMappingStrategy implements MappingStrategy {
 
     @Override
     public void mapAttributes(EntityMetadata metadata, Class<?> entityClass) {
         // @Id
         List<Field> idFields = ReflectionUtils.getFieldsWithAnotation(entityClass, Id.class);
-        validateId(idFields, entityClass);
+        MappingValidationUtils.validateSingleId(idFields, entityClass);
         for (Field idField : idFields) {
             if (metadata.isValidForMapping(idField.getDeclaringClass())) {
                 var idCol = metadata.createColumnMetadata(idField);
@@ -49,14 +53,5 @@ public class DefaultMappingStrategy implements MappingStrategy {
             return tableAnno.name().isBlank() ? entityClass.getSimpleName() : tableAnno.name();
         }
         return entityClass.getSimpleName();
-    }
-
-    private void validateId(List<Field> fields, Class<?> clazz) {
-        if (fields.size() > 1) {
-            throw new DAMException("More than one @Id in " + clazz.getSimpleName());
-        }
-        if (fields.isEmpty()) {
-            throw new DAMException("No @Id set for " + clazz.getSimpleName());
-        }
     }
 }
