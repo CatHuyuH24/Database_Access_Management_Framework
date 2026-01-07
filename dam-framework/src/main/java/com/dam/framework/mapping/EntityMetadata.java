@@ -1,80 +1,77 @@
 package com.dam.framework.mapping;
 
+import com.dam.framework.annotations.MappedSuperclass;
+import com.dam.framework.mapping.strategy.MappingStrategy;
+import com.dam.framework.mapping.strategy.MappingStrategyFactory;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.dam.framework.annotations.Column;
-import com.dam.framework.annotations.Id;
-import com.dam.framework.annotations.Table;
 import com.dam.framework.exception.DAMException;
-import com.dam.framework.util.ReflectionUtils;
 
 /**
  * Holds metadata information about an entity class.
  * <p>
- * This class is populated by parsing annotations on entity classes
- * and is cached for performance.
- * 
+ * This class is populated by parsing annotations on entity classes and is cached for performance.
+ *
  * @see com.dam.framework.annotations.Entity
  */
 public class EntityMetadata {
 
-    private Class<?> entityClass;
-    private String tableName;
-    private String tableSchema;
-    private ColumnMetadata idColumn;
-    private List<ColumnMetadata> columns;
-
-    // - Relationship metadata
-    // private Map<String, RelationshipMetadata> relationships;
+    protected Class<?> entityClass;
+    protected String tableName;
+    protected String tableSchema;
+    protected ColumnMetadata idColumn;
+    protected List<ColumnMetadata> columns;
+    private String discriminatorColumn;
+    private String discriminatorValue;
 
     public EntityMetadata(Class<?> entityClass) {
+        if (!entityClass.isAnnotationPresent(com.dam.framework.annotations.Entity.class)) {
+            throw new DAMException(
+                    "Class " + entityClass.getSimpleName() + " is not marked with @Entity");
+        }
+
         this.entityClass = entityClass;
 
-        // Reflection scanning to process table name and schema
-        if (entityClass.isAnnotationPresent(Table.class)) {
-            Table tableAnnotation = entityClass.getAnnotation(Table.class);
-            this.tableName = tableAnnotation.name().isBlank() ? entityClass.getSimpleName() : tableAnnotation.name();
-            this.tableSchema = tableAnnotation.schema().isBlank() ? "public" : tableAnnotation.schema();
-        } else {
-            this.tableName = entityClass.getSimpleName();
-            this.tableSchema = "public";
-        }
+        // Attributes
+        // Get strategy
+        MappingStrategy mappingStrategy = MappingStrategyFactory.getStrategy(entityClass);
+        this.tableName = mappingStrategy.getTableName(entityClass);
+        mappingStrategy.mapAttributes(this, entityClass);
+    }
 
-        // Reflection scanning to process columns
-        List<Field> fields = ReflectionUtils.getFieldsWithAnotation(entityClass, Id.class);
-        if (fields.size() > 1) {
-            throw new DAMException(
-                    "More than one column is annotated with @Id in class " + entityClass.getSimpleName());
-        } else if (fields.size() < 1) {
-            throw new DAMException("No annotation @Id is set for class " + entityClass.getSimpleName());
-        }
-        Field idField = fields.getFirst();
-        String idColName = idField.getName();
-        if (idField.isAnnotationPresent(Column.class)) {
-            Column colAnnotation = idField.getAnnotation(Column.class);
-            idColName = colAnnotation.name().isBlank() ? idField.getName() : colAnnotation.name();
-        }
-        this.idColumn = new ColumnMetadata(idField, idColName, idField.getType(), null, false, true);
+    public ColumnMetadata createColumnMetadata(Field field) {
+        String colName = field.getName();
+        boolean nullable = true;
+        boolean unique = false;
 
-        this.columns = new ArrayList<>();
-        this.columns.add(idColumn);// also include id column
-        fields = ReflectionUtils.getFieldsWithAnotation(entityClass, Column.class);
-        for (Field field : fields) {
-            Column colAnnotation = field.getAnnotation(Column.class);
-            String colName = colAnnotation.name().isBlank() ? field.getName() : colAnnotation.name();
-            this.columns.add(
-                    new ColumnMetadata(
-                            field,
-                            colName, field.getType(),
-                            null, colAnnotation.nullable(),
-                            colAnnotation.unique()));// `field` is the value of the column in Java program, so that we
-                                                     // can retrieve
-            // later and process in db layer
+        if (field.isAnnotationPresent(Column.class)) {
+            Column colAnno = field.getAnnotation(Column.class);
+            colName = colAnno.name().isBlank() ? field.getName() : colAnno.name();
+            nullable = colAnno.nullable();
+            unique = colAnno.unique();
         }
+        field.setAccessible(true);
 
+        return new ColumnMetadata(
+                field,
+                colName,
+                field.getType(),
+                null,
+                nullable,
+                unique
+        );
+    }
+
+    public boolean isValidForMapping(Class<?> declaringClass) {
+        if (declaringClass == this.entityClass) {
+            return true;
+        }
+        return declaringClass.isAnnotationPresent(MappedSuperclass.class) &&
+                !declaringClass.isAnnotationPresent(com.dam.framework.annotations.Entity.class);
     }
 
     public Class<?> getEntityClass() {
@@ -95,6 +92,40 @@ public class EntityMetadata {
 
     public String getSchema() {
         return tableSchema;
+    }
+
+    public void addColumn(ColumnMetadata column) {
+        if (this.columns == null) {
+            this.columns = new ArrayList<>();
+        }
+        if (isNotAlreadyMapped(column)) {
+            this.columns.add(column);
+        }
+    }
+
+    public void setDiscriminatorColumn(String name) {
+        this.discriminatorColumn = name;
+    }
+
+    public void setDiscriminatorValue(String value) {
+        this.discriminatorValue = value;
+    }
+
+    public String getDiscriminatorColumn() {
+        return discriminatorColumn;
+    }
+
+    public String getDiscriminatorValue() {
+        return discriminatorValue;
+    }
+
+    public void setIdColumn(ColumnMetadata idCol) {
+        this.idColumn = idCol;
+    }
+
+    private boolean isNotAlreadyMapped(ColumnMetadata newCol) {
+        return columns.stream()
+                .noneMatch(c -> c.columnName().equalsIgnoreCase(newCol.columnName()));
     }
 
 }

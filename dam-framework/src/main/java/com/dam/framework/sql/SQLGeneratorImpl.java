@@ -8,6 +8,7 @@ import com.dam.framework.annotations.GenerationType;
 import com.dam.framework.exception.DAMException;
 import com.dam.framework.mapping.ColumnMetadata;
 import com.dam.framework.mapping.EntityMetadata;
+import com.dam.framework.mapping.util.DiscriminatorHandler;
 
 public final class SQLGeneratorImpl implements SQLGenerator {
 
@@ -33,12 +34,20 @@ public final class SQLGeneratorImpl implements SQLGenerator {
                 .collect(Collectors.toList());
 
         String tableName = getFullTableName(metadata);
-        String columnNames = columns.stream()
-                .map(ColumnMetadata::columnName)
-                .collect(Collectors.joining(", "));
 
-        String placeholders = String.join(", ",
-                Collections.nCopies(columns.size(), "?"));
+        StringBuilder columnNames = new StringBuilder(columns.stream()
+                .map(ColumnMetadata::columnName)
+                .collect(Collectors.joining(", ")));
+
+        StringBuilder placeholders = new StringBuilder(
+                String.join(", ", Collections.nCopies(columns.size(), "?")));
+
+        if (metadata.getDiscriminatorColumn() != null) {
+            columnNames.append(", ").append(metadata.getDiscriminatorColumn());
+            String escapedValue = DiscriminatorHandler.escapeDiscriminatorValue(
+                    metadata.getDiscriminatorValue());
+            placeholders.append(", '").append(escapedValue).append("'");
+        }
 
         return String.format("INSERT INTO %s (%s) VALUES (%s)",
                 tableName, columnNames, placeholders);
@@ -47,20 +56,23 @@ public final class SQLGeneratorImpl implements SQLGenerator {
     @Override
     public String generateSelect(EntityMetadata metadata) {
         // SELECT * FROM schema.table
-        return String.format("SELECT * FROM %s", getFullTableName(metadata));
+        String sql = String.format("SELECT * FROM %s", getFullTableName(metadata));
+        return applyDiscriminatorFilter(metadata, sql, false);
     }
 
     @Override
     public String generateSelectById(EntityMetadata metadata) {
         // SELECT * FROM schema.table WHERE id_column = ?
-        return String.format("SELECT * FROM %s WHERE %s = ?",
+        String sql = String.format("SELECT * FROM %s WHERE %s = ?",
                 getFullTableName(metadata),
                 metadata.getIdColumn().columnName());
+        return applyDiscriminatorFilter(metadata, sql, true);
     }
 
     @Override
     public String generateUpdate(EntityMetadata metadata) {
-        // UPDATE schema.table SET col1 = ?, col2 = ? WHERE id_column = ?
+        // UPDATE schema.table SET col1 = ?, col2 = ? WHERE id_column = ? [AND
+        // discriminator]
         String tableName = getFullTableName(metadata);
 
         String setClause = metadata.getColumns().stream()
@@ -68,18 +80,32 @@ public final class SQLGeneratorImpl implements SQLGenerator {
                 .map(col -> col.columnName() + " = ?")
                 .collect(Collectors.joining(", "));
 
-        return String.format("UPDATE %s SET %s WHERE %s = ?",
+        String sql = String.format("UPDATE %s SET %s WHERE %s = ?",
                 tableName,
                 setClause,
                 metadata.getIdColumn().columnName());
+        // Add discriminator filter if present
+        if (metadata.getDiscriminatorColumn() != null) {
+            String escapedValue = DiscriminatorHandler.escapeDiscriminatorValue(
+                    metadata.getDiscriminatorValue());
+            sql += " AND " + metadata.getDiscriminatorColumn() + " = '" + escapedValue + "'";
+        }
+        return sql;
     }
 
     @Override
     public String generateDelete(EntityMetadata metadata) {
-        // DELETE FROM schema.table WHERE id_column = ?
-        return String.format("DELETE FROM %s WHERE %s = ?",
+        // DELETE FROM schema.table WHERE id_column = ? [AND discriminator]
+        String sql = String.format("DELETE FROM %s WHERE %s = ?",
                 getFullTableName(metadata),
                 metadata.getIdColumn().columnName());
+        // Add discriminator filter if present
+        if (metadata.getDiscriminatorColumn() != null) {
+            String escapedValue = DiscriminatorHandler.escapeDiscriminatorValue(
+                    metadata.getDiscriminatorValue());
+            sql += " AND " + metadata.getDiscriminatorColumn() + " = '" + escapedValue + "'";
+        }
+        return sql;
     }
 
     private String getFullTableName(EntityMetadata metadata) {
@@ -89,6 +115,17 @@ public final class SQLGeneratorImpl implements SQLGenerator {
             return schema + "." + table;
         }
         return table;
+    }
+
+    private String applyDiscriminatorFilter(EntityMetadata metadata, String sql, boolean hasExistingWhere) {
+        if (metadata.getDiscriminatorColumn() == null) {
+            return sql;
+        }
+
+        String prefix = hasExistingWhere ? " AND " : " WHERE ";
+        String escapedValue = DiscriminatorHandler.escapeDiscriminatorValue(
+                metadata.getDiscriminatorValue());
+        return sql + prefix + metadata.getDiscriminatorColumn() + " = '" + escapedValue + "'";
     }
 
     @Override
