@@ -169,7 +169,7 @@ public class QueryImpl<T> implements Query<T> {
                 // resultSet
                 for (ColumnMetadata col : metadata.getColumns()) {
                     try {
-                        Object value = TypeMapper.getResultSetValue(rs, col.columnName(), col.getClass());
+                        Object value = TypeMapper.getResultSetValue(rs, col.columnName(), col.field().getType());
                         ReflectionUtils.setFieldValue(entity, col.field(), value);
                     } catch (SQLException e) {
                         // Column might not be in SELECT list - skip

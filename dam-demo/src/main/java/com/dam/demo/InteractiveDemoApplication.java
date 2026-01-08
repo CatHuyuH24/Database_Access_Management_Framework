@@ -38,7 +38,7 @@ public class InteractiveDemoApplication {
 
     private static void initializeFramework() {
         printBanner();
-        System.out.println("🔧 Initializing DAM Framework...");
+        System.out.println("Initializing DAM Framework...");
 
         try {
             // Wait a bit for MySQL to be ready
@@ -46,7 +46,7 @@ public class InteractiveDemoApplication {
 
             Configuration config = new Configuration()
                     .setDialectDriver(new MySQLDialectDriver())
-                    .setUrl("jdbc:mysql://mysql:3306/dam_demo")
+                    .setUrl("jdbc:mysql://localhost:3306/dam_demo")
                     .setUsername("root")
                     .setPassword("rootpassword")
                     .addAnnotatedClass(User.class)
@@ -55,10 +55,10 @@ public class InteractiveDemoApplication {
                     .addAnnotatedClass(Session.class);
 
             sessionFactory = config.buildSessionFactory();
-            System.out.println("✅ Framework initialized successfully!\n");
+            System.out.println("Framework initialized successfully!\n");
 
         } catch (Exception e) {
-            System.err.println("❌ Failed to initialize: " + e.getMessage());
+            System.err.println("Failed to initialize: " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -70,15 +70,15 @@ public class InteractiveDemoApplication {
             System.out.println("║              DAM FRAMEWORK - MAIN MENU                     ║");
             System.out.println("╚════════════════════════════════════════════════════════════╝");
             System.out.println();
-            System.out.println("  [1] 👥 User Management");
-            System.out.println("  [2] 📦 Product Management");
-            System.out.println("  [3] 🧪 Demo All Features");
-            System.out.println("  [4] 🔍 Query & Search");
-            System.out.println("  [5] 💾 Transaction Examples");
-            System.out.println("  [6] 📊 View All Data");
-            System.out.println("  [0] 🚪 Exit");
+            System.out.println("  [1] User Management");
+            System.out.println("  [2] Product Management");
+            System.out.println("  [3] Demo All Features");
+            System.out.println("  [4] Query & Search");
+            System.out.println("  [5] Transaction Examples");
+            System.out.println("  [6] View All Data");
+            System.out.println("  [0] Exit");
             System.out.println();
-            System.out.print("👉 Choose an option: ");
+            System.out.print("Choose an option: ");
 
             String choice = scanner.nextLine().trim();
 
@@ -102,10 +102,10 @@ public class InteractiveDemoApplication {
                     viewAllData();
                     break;
                 case "0":
-                    System.out.println("\n👋 Goodbye!");
+                    System.out.println("\nGoodbye!");
                     return;
                 default:
-                    System.out.println("\n❌ Invalid option. Try again.");
+                    System.out.println("\nInvalid option. Try again.");
             }
         }
     }
@@ -113,13 +113,13 @@ public class InteractiveDemoApplication {
     private static void userManagementMenu() {
         while (true) {
             printSeparator();
-            System.out.println("═══ 👥 USER MANAGEMENT ═══");
+            System.out.println("═══  USER MANAGEMENT ═══");
             System.out.println("[1] Create User");
             System.out.println("[2] List All Users");
             System.out.println("[3] Update User");
             System.out.println("[4] Delete User");
             System.out.println("[0] Back to Main Menu");
-            System.out.print("\n👉 Choose: ");
+            System.out.print("\n Choose: ");
 
             String choice = scanner.nextLine().trim();
 
@@ -139,7 +139,7 @@ public class InteractiveDemoApplication {
                 case "0":
                     return;
                 default:
-                    System.out.println("❌ Invalid option");
+                    System.out.println(" Invalid option");
             }
         }
     }
@@ -147,13 +147,13 @@ public class InteractiveDemoApplication {
     private static void productManagementMenu() {
         while (true) {
             printSeparator();
-            System.out.println("═══ 📦 PRODUCT MANAGEMENT ═══");
+            System.out.println("═══  PRODUCT MANAGEMENT ═══");
             System.out.println("[1] Create Product");
             System.out.println("[2] List All Products");
             System.out.println("[3] Update Product Price");
             System.out.println("[4] Delete Product");
             System.out.println("[0] Back to Main Menu");
-            System.out.print("\n👉 Choose: ");
+            System.out.print("\nChoose: ");
 
             String choice = scanner.nextLine().trim();
 
@@ -173,7 +173,7 @@ public class InteractiveDemoApplication {
                 case "0":
                     return;
                 default:
-                    System.out.println("❌ Invalid option");
+                    System.out.println("Invalid option");
             }
         }
     }
@@ -181,11 +181,11 @@ public class InteractiveDemoApplication {
     // ==================== User CRUD Operations ====================
 
     private static void createUser() {
-        System.out.print("\n📝 Username: ");
+        System.out.print("\nUsername: ");
         String username = scanner.nextLine().trim();
-        System.out.print("📧 Email: ");
+        System.out.print("Email: ");
         String email = scanner.nextLine().trim();
-        System.out.print("🎂 Age: ");
+        System.out.print("Age: ");
         int age = Integer.parseInt(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
@@ -195,9 +195,9 @@ public class InteractiveDemoApplication {
             session.persist(user);
 
             tx.commit();
-            System.out.println("✅ User created with ID: " + user.getId());
+            System.out.println("User created with ID: " + user.getId());
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
@@ -208,7 +208,7 @@ public class InteractiveDemoApplication {
             Query<User> query = session.createQuery(User.class);
             List<User> users = query.getResultList();
 
-            System.out.println("\n👥 ALL USERS (" + users.size() + " found)");
+            System.out.println("\nALL USERS (" + users.size() + " found)");
             System.out.println("─".repeat(80));
 
             if (users.isEmpty()) {
@@ -220,29 +220,29 @@ public class InteractiveDemoApplication {
                 }
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void updateUser() {
-        System.out.print("\n🔍 Enter User ID to update: ");
+        System.out.print("\nEnter User ID to update: ");
         Long id = Long.parseLong(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
             User user = session.find(User.class, id);
 
             if (user == null) {
-                System.out.println("❌ User not found!");
+                System.out.println("User not found!");
                 pause();
                 return;
             }
 
             System.out.println("Current: " + user);
-            System.out.print("📧 New Email (or press Enter to skip): ");
+            System.out.print("New Email (or press Enter to skip): ");
             String email = scanner.nextLine().trim();
-            System.out.print("🎂 New Age (or press Enter to skip): ");
+            System.out.print("New Age (or press Enter to skip): ");
             String ageStr = scanner.nextLine().trim();
 
             Transaction tx = session.beginTransaction();
@@ -255,41 +255,41 @@ public class InteractiveDemoApplication {
             session.merge(user);
             tx.commit();
 
-            System.out.println("✅ User updated!");
+            System.out.println("User updated!");
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void deleteUser() {
-        System.out.print("\n🗑️  Enter User ID to delete: ");
+        System.out.print("\nEnter User ID to delete: ");
         Long id = Long.parseLong(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
             User user = session.find(User.class, id);
 
             if (user == null) {
-                System.out.println("❌ User not found!");
+                System.out.println("User not found!");
                 pause();
                 return;
             }
 
             System.out.println("Found: " + user);
-            System.out.print("⚠️  Confirm delete? (yes/no): ");
+            System.out.print("Confirm delete? (yes/no): ");
             String confirm = scanner.nextLine().trim();
 
             if (confirm.equalsIgnoreCase("yes")) {
                 Transaction tx = session.beginTransaction();
                 session.remove(user);
                 tx.commit();
-                System.out.println("✅ User deleted!");
+                System.out.println("User deleted!");
             } else {
-                System.out.println("❌ Cancelled");
+                System.out.println("Cancelled");
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
@@ -298,9 +298,9 @@ public class InteractiveDemoApplication {
     // ==================== Product CRUD Operations ====================
 
     private static void createProduct() {
-        System.out.print("\n📝 Product Name: ");
+        System.out.print("\nProduct Name: ");
         String name = scanner.nextLine().trim();
-        System.out.print("💰 Price: ");
+        System.out.print("Price: ");
         double price = Double.parseDouble(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
@@ -310,9 +310,9 @@ public class InteractiveDemoApplication {
             session.persist(product);
 
             tx.commit();
-            System.out.println("✅ Product created with ID: " + product.getId());
+            System.out.println("Product created with ID: " + product.getId());
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
@@ -323,7 +323,7 @@ public class InteractiveDemoApplication {
             Query<Product> query = session.createQuery(Product.class);
             List<Product> products = query.getResultList();
 
-            System.out.println("\n📦 ALL PRODUCTS (" + products.size() + " found)");
+            System.out.println("\nALL PRODUCTS (" + products.size() + " found)");
             System.out.println("─".repeat(80));
 
             if (products.isEmpty()) {
@@ -335,27 +335,27 @@ public class InteractiveDemoApplication {
                 }
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void updateProduct() {
-        System.out.print("\n🔍 Enter Product ID to update: ");
+        System.out.print("\nEnter Product ID to update: ");
         Long id = Long.parseLong(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
             Product product = session.find(Product.class, id);
 
             if (product == null) {
-                System.out.println("❌ Product not found!");
+                System.out.println("Product not found!");
                 pause();
                 return;
             }
 
             System.out.println("Current: " + product);
-            System.out.print("💰 New Price: ");
+            System.out.print("New Price: ");
             double price = Double.parseDouble(scanner.nextLine().trim());
 
             Transaction tx = session.beginTransaction();
@@ -363,41 +363,41 @@ public class InteractiveDemoApplication {
             session.merge(product);
             tx.commit();
 
-            System.out.println("✅ Product updated!");
+            System.out.println("Product updated!");
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void deleteProduct() {
-        System.out.print("\n🗑️  Enter Product ID to delete: ");
+        System.out.print("\nEnter Product ID to delete: ");
         Long id = Long.parseLong(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
             Product product = session.find(Product.class, id);
 
             if (product == null) {
-                System.out.println("❌ Product not found!");
+                System.out.println("Product not found!");
                 pause();
                 return;
             }
 
             System.out.println("Found: " + product);
-            System.out.print("⚠️  Confirm delete? (yes/no): ");
+            System.out.print("Confirm delete? (yes/no): ");
             String confirm = scanner.nextLine().trim();
 
             if (confirm.equalsIgnoreCase("yes")) {
                 Transaction tx = session.beginTransaction();
                 session.remove(product);
                 tx.commit();
-                System.out.println("✅ Product deleted!");
+                System.out.println("Product deleted!");
             } else {
-                System.out.println("❌ Cancelled");
+                System.out.println("Cancelled");
             }
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
@@ -406,48 +406,48 @@ public class InteractiveDemoApplication {
     // ==================== Demo & Query Features ====================
 
     private static void demoAllFeatures() {
-        System.out.println("\n🧪 Running comprehensive demo...\n");
+        System.out.println("\nRunning comprehensive demo...\n");
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
             Transaction tx = session.beginTransaction();
 
             // Create sample data
-            System.out.println("1️⃣  Creating sample users...");
+            System.out.println("[1] Creating sample users...");
             User user1 = new User("alice", "alice@example.com", 25);
             User user2 = new User("bob", "bob@example.com", 30);
             session.persist(user1);
             session.persist(user2);
-            System.out.println("   ✓ Users created");
+            System.out.println("    Users created");
 
-            System.out.println("\n2️⃣  Creating sample products...");
+            System.out.println("\n[2] Creating sample products...");
             Product p1 = new Product("Laptop", 1299.99);
             Product p2 = new Product("Mouse", 29.99);
             Product p3 = new Product("Keyboard", 79.99);
             session.persist(p1);
             session.persist(p2);
             session.persist(p3);
-            System.out.println("   ✓ Products created");
+            System.out.println("    Products created");
 
             tx.commit();
-            System.out.println("\n3️⃣  Transaction committed");
+            System.out.println("\n[3] Transaction committed");
 
             // Read operations
-            System.out.println("\n4️⃣  Reading data...");
+            System.out.println("\n[4] Reading data...");
             User foundUser = session.find(User.class, user1.getId());
-            System.out.println("   ✓ Found user: " + foundUser.getUsername());
+            System.out.println("    Found user: " + foundUser.getUsername());
 
             // Update operations
-            System.out.println("\n5️⃣  Updating data...");
+            System.out.println("\n[5] Updating data...");
             Transaction tx2 = session.beginTransaction();
             foundUser.setAge(26);
             session.merge(foundUser);
             tx2.commit();
-            System.out.println("   ✓ User age updated to: " + foundUser.getAge());
+            System.out.println("    User age updated to: " + foundUser.getAge());
 
-            System.out.println("\n✅ Demo completed successfully!");
+            System.out.println("\nDemo completed successfully!");
 
         } catch (Exception e) {
-            System.err.println("❌ Demo failed: " + e.getMessage());
+            System.err.println("Demo failed: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -455,10 +455,10 @@ public class InteractiveDemoApplication {
     }
 
     private static void queryMenu() {
-        System.out.println("\n🔍 QUERY EXAMPLES");
+        System.out.println("\nQUERY EXAMPLES");
         System.out.println("[1] Find users by age range");
         System.out.println("[2] Find products by price range");
-        System.out.print("\n👉 Choose: ");
+        System.out.print("\nChoose: ");
 
         String choice = scanner.nextLine().trim();
 
@@ -470,7 +470,7 @@ public class InteractiveDemoApplication {
     }
 
     private static void queryUsersByAge() {
-        System.out.print("\n🔢 Minimum age: ");
+        System.out.print("\nMinimum age: ");
         int minAge = Integer.parseInt(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
@@ -478,19 +478,19 @@ public class InteractiveDemoApplication {
                     .where("age >= ?", minAge);
             List<User> users = query.getResultList();
 
-            System.out.println("\n📊 Found " + users.size() + " users:");
+            System.out.println("\nFound " + users.size() + " users:");
             for (User user : users) {
-                System.out.println("  • " + user.getUsername() + " (age: " + user.getAge() + ")");
+                System.out.println("  - " + user.getUsername() + " (age: " + user.getAge() + ")");
             }
         } catch (Exception e) {
-            System.err.println("❌ Query failed: " + e.getMessage());
+            System.err.println("Query failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void queryProductsByPrice() {
-        System.out.print("\n💰 Maximum price: ");
+        System.out.print("\nMaximum price: ");
         double maxPrice = Double.parseDouble(scanner.nextLine().trim());
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
@@ -498,22 +498,22 @@ public class InteractiveDemoApplication {
                     .where("price <= ?", maxPrice);
             List<Product> products = query.getResultList();
 
-            System.out.println("\n📊 Found " + products.size() + " products:");
+            System.out.println("\nFound " + products.size() + " products:");
             for (Product product : products) {
-                System.out.println("  • " + product.getName() + " ($" + product.getPrice() + ")");
+                System.out.println("  - " + product.getName() + " ($" + product.getPrice() + ")");
             }
         } catch (Exception e) {
-            System.err.println("❌ Query failed: " + e.getMessage());
+            System.err.println("Query failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void transactionExamples() {
-        System.out.println("\n💾 TRANSACTION EXAMPLES");
+        System.out.println("\nTRANSACTION EXAMPLES");
         System.out.println("[1] Successful commit");
         System.out.println("[2] Rollback example");
-        System.out.print("\n👉 Choose: ");
+        System.out.print("\nChoose: ");
 
         String choice = scanner.nextLine().trim();
 
@@ -532,9 +532,9 @@ public class InteractiveDemoApplication {
             session.persist(user);
 
             tx.commit();
-            System.out.println("✅ Transaction committed! User ID: " + user.getId());
+            System.out.println("Transaction committed! User ID: " + user.getId());
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
@@ -549,16 +549,16 @@ public class InteractiveDemoApplication {
             System.out.println("User created (not yet committed)");
 
             tx.rollback();
-            System.out.println("✅ Transaction rolled back! User was NOT saved.");
+            System.out.println("Transaction rolled back! User was NOT saved.");
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
     }
 
     private static void viewAllData() {
-        System.out.println("\n📊 DATABASE OVERVIEW");
+        System.out.println("\nDATABASE OVERVIEW");
 
         try (com.dam.framework.session.Session session = sessionFactory.openSession()) {
             // Count users
@@ -570,12 +570,12 @@ public class InteractiveDemoApplication {
             List<Product> products = productQuery.getResultList();
 
             System.out.println("─".repeat(60));
-            System.out.println("👥 Users:    " + users.size());
-            System.out.println("📦 Products: " + products.size());
+            System.out.println("Users:    " + users.size());
+            System.out.println("Products: " + products.size());
             System.out.println("─".repeat(60));
 
         } catch (Exception e) {
-            System.err.println("❌ Failed: " + e.getMessage());
+            System.err.println("Failed: " + e.getMessage());
         }
 
         pause();
@@ -587,9 +587,9 @@ public class InteractiveDemoApplication {
         if (sessionFactory != null) {
             try {
                 sessionFactory.close();
-                System.out.println("\n✅ SessionFactory closed");
+                System.out.println("\nSessionFactory closed");
             } catch (Exception e) {
-                System.err.println("❌ Cleanup failed: " + e.getMessage());
+                System.err.println("Cleanup failed: " + e.getMessage());
             }
         }
         if (scanner != null) {
@@ -612,7 +612,7 @@ public class InteractiveDemoApplication {
     }
 
     private static void pause() {
-        System.out.print("\n⏸️  Press Enter to continue...");
+        System.out.print("\nPress Enter to continue...");
         scanner.nextLine();
     }
 }

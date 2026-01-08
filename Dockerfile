@@ -1,11 +1,11 @@
 # Multi-stage build for DAM Framework Demo
 
 # Stage 1: Build the application
-FROM maven:3.9-eclipse-temurin-11 AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
-# Copy framework and demo
+# Copy framework and demo code
 COPY dam-framework ./dam-framework
 COPY dam-demo ./dam-demo
 
@@ -18,7 +18,7 @@ WORKDIR /app/dam-demo
 RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime
-FROM eclipse-temurin:11-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
