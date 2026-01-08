@@ -1,4 +1,4 @@
-package com.dam.demo.sprint2;
+package com.dam.demo;
 
 import java.lang.reflect.Field;
 

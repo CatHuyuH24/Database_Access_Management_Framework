@@ -26,6 +26,7 @@ import com.dam.framework.query.Query;
 import com.dam.framework.query.QueryImpl;
 import com.dam.framework.sql.SQLGenerator;
 import com.dam.framework.transaction.Transaction;
+import com.dam.framework.transaction.TransactionImpl;
 import com.dam.framework.util.ReflectionUtils;
 import com.dam.framework.util.TypeMapper;
 import com.dam.framework.util.IdTypeConverter;
@@ -39,6 +40,7 @@ class SessionImpl implements Session {
     private final SQLGenerator sqlGenerator;
     private final Dialect dialect;
     private final boolean showSQL;
+    private Transaction currentTransaction;
     private static final Logger logger = LoggerFactory.getLogger(SessionImpl.class);
 
     public SessionImpl(InternalSessionFactory factory,
@@ -54,6 +56,21 @@ class SessionImpl implements Session {
 
     @Override
     public void close() throws Exception {
+        // Auto-rollback uncommitted transaction
+        if (currentTransaction != null && currentTransaction.isActive()) {
+            logger.warn(
+                    "Session closing with active transaction. " +
+                            "Auto-rolling back uncommitted changes. " +
+                            "Always explicitly commit or rollback transactions!");
+
+            try {
+                currentTransaction.rollback();
+            } catch (Exception e) {
+                logger.error("Failed to rollback transaction during session close", e);
+                // Continue with session cleanup
+            }
+        }
+
         // clear L1 cache (session-specific data)
         attachedEntities.clear();
         originalSnapshots.clear();
@@ -341,8 +358,19 @@ class SessionImpl implements Session {
 
     @Override
     public Transaction beginTransaction() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'beginTransaction'");
+        // Prevent nested transactions (not supported in this version)
+        if (currentTransaction != null && currentTransaction.isActive()) {
+            throw new IllegalStateException(
+                    "Transaction already active. " +
+                            "Commit or rollback current transaction before starting a new one.");
+        }
+
+        // Create new transaction
+        currentTransaction = new TransactionImpl(connection);
+        currentTransaction.begin();
+
+        logger.debug("Transaction started for session");
+        return currentTransaction;
     }
 
     private List<ColumnMetadata> getChangedColumns(Map.Entry<EntityKey, Object> currentAttachedObject) {

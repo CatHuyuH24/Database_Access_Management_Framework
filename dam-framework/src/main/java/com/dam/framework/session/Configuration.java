@@ -220,7 +220,7 @@ public class Configuration {
      * @throws DAMException if missing or pass in wrong arguments
      * @return the configured SessionFactory
      */
-    SessionFactory buildSessionFactory() {
+    public SessionFactory buildSessionFactory() {
 
         // sessionFactory gets a snapshot of metadata, not a mutable reference
         if (null == builtFactory) {
